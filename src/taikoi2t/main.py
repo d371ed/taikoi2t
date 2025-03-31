@@ -2,27 +2,29 @@ import math
 import sys
 
 import cv2
+import easyocr  # type: ignore
 import numpy
-
-# import easyocr  # type: ignore
 from cv2 import (
+    LUT,
     approxPolyDP,
     boundingRect,
     cvtColor,
     findContours,
     imread,
+    rectangle,
+    resize,
     threshold,
     warpAffine,
 )
-from numpy import float64, int32, uint8
+from numpy import float64, uint8
 
 type Image = numpy.typing.NDArray[uint8]
-type Result = tuple[list[tuple[int32, int32]], str, float64]
+type Character = tuple[list[tuple[int, int]], str, float]
 type Bounding = tuple[int, int, int, int]
 
-# reader = easyocr.Reader(["ja", "en"])
+STUDENTS_PITCH = int(1844 // 113)
 
-THRESHOLD: int = 120
+reader = easyocr.Reader(["ja", "en"])
 
 
 def run() -> None:
@@ -32,38 +34,56 @@ def run() -> None:
             continue
         print(f"=== {path} ===")
 
-        resultBounding = find_result_bounding(source)
+        grayscale: Image = cvtColor(source, cv2.COLOR_BGR2GRAY)
+
+        resultBounding = find_result_bounding(grayscale)
         if resultBounding is None:
             continue
 
         studentsBounding = get_students_bounding(resultBounding)
-        studentsImage = preprocess_students(source, studentsBounding)
+        leftTeamImage, rightTeamImage = preprocess_students(grayscale, studentsBounding)
 
-        show_image(path, studentsImage)
+        leftTeamChars: list[Character] = reader.readtext(leftTeamImage)  # type: ignore
+        rightTeamChars: list[Character] = reader.readtext(rightTeamImage)  # type: ignore
+
+        pitch: int = int(
+            (leftTeamImage.shape[1] + rightTeamImage.shape[1]) / 1844.0 * 113
+        )
+        print(f"pitch: {pitch}")
+
+        for char in leftTeamChars:
+            print(char)
+            rectangle(leftTeamImage, char[0][0], char[0][2], 0, 1)
+        print(groupCharacters(leftTeamChars, pitch))
+        show_image(path, leftTeamImage)
+
+        for char in rightTeamChars:
+            print(char)
+            rectangle(rightTeamImage, char[0][0], char[0][2], 0, 1)
+        print(groupCharacters(rightTeamChars, pitch))
+        show_image(path, rightTeamImage)
+
+        print(", ".join(r[1] for r in (leftTeamChars + rightTeamChars)))
 
 
-def find_result_bounding(image: Image) -> Bounding | None:
+def find_result_bounding(grayscale: Image) -> Bounding | None:
     RESULT_RATIO: float = 0.43
     RATIO_EPS: float = 0.05
 
-    imageWidth: int = image.shape[1]
+    sourceWidth: int = grayscale.shape[1]
 
-    grayImage: Image = cvtColor(image, cv2.COLOR_BGR2GRAY)
-    wbImage: Image = threshold(grayImage, 0, 255, cv2.THRESH_OTSU)[1]
-
-    contours, _ = findContours(wbImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    binary: Image = threshold(grayscale, 0, 255, cv2.THRESH_OTSU)[1]
+    contours, _ = findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contours:
-        bound: list[int] = boundingRect(approxPolyDP(contour, 3, True))
-        if len(bound) < 4:
+        bounding: list[int] = boundingRect(approxPolyDP(contour, 3, True))
+        if len(bounding) < 4:
             continue
 
-        [left, top, width, height] = bound
+        [left, top, width, height] = bounding
         ratio: float = height / width
-        if width > imageWidth / 2 and abs(ratio - RESULT_RATIO) < RATIO_EPS:
-            right: int = left + width
-            bottom: int = top + height
-            return (left, top, right, bottom)
+        if width > sourceWidth / 2 and abs(ratio - RESULT_RATIO) < RATIO_EPS:
+            return (left, top, left + width, top + height)
 
 
 def get_students_bounding(bounding: Bounding) -> Bounding:
@@ -80,16 +100,61 @@ def cutout_image(image: Image, bounding: Bounding) -> Image:
     return image[top:bottom, left:right]
 
 
-def preprocess_students(source: Image, bounding: Bounding) -> Image:
-    SKEW_ANGLE: float = math.tan(math.radians(14))
-    SKEW_MAT = numpy.array([[1, SKEW_ANGLE, 0], [0, 1, 0]], dtype=float64)
+def preprocess_students(grayscale: Image, bounding: Bounding) -> tuple[Image, Image]:
+    footer: Image = cutout_image(grayscale, bounding)
+    WIDTH: int = 4000
+    resized: Image = resize_to(footer, WIDTH)
+    skewed: Image = skew(resized, 14.0)
 
-    (left, top, right, bottom) = bounding
-    width: int = right - left
-    height: int = bottom - top
+    P0 = 112
+    P1 = 192
+    GAIN: float = 256.0 / (P1 - P0)
+    BIAS: float = -P0 * GAIN
+    x = numpy.arange(256, dtype=numpy.uint8)
+    y = numpy.clip(x * GAIN + BIAS, 0, 255)
+    leveled: Image = LUT(skewed, y).astype(numpy.uint8)
 
-    footer: Image = cutout_image(source, bounding)
-    return warpAffine(footer, SKEW_MAT, (int(width + height * SKEW_ANGLE), height))
+    height: int = leveled.shape[1]
+    center: int = WIDTH // 2
+    MARGIN: int = 100
+
+    return (
+        leveled[0:height, MARGIN:center],
+        leveled[0:height, center : (WIDTH - MARGIN)],
+    )
+
+
+def groupCharacters(chars: list[Character], pitch: int) -> list[str]:
+    leftmost: int = 9999999
+    rightmost: int = 0
+    for char in chars:
+        leftmost = min(leftmost, char[0][0][0])
+        rightmost = max(rightmost, char[0][2][0])
+    students: list[str] = list()
+    margin: int = pitch // 10
+    for groupX in range(leftmost, rightmost, pitch):
+        buffer: str = ""
+        for char in chars:
+            x: int = char[0][0][0]
+            if x >= groupX - margin and x < groupX + pitch - margin:
+                buffer += char[1]
+        if len(buffer) > 0:
+            students.append(buffer)
+    return students
+
+
+def skew(source: Image, degree: float) -> Image:
+    tanTheta: float = math.tan(math.radians(degree))
+    mat = numpy.array([[1, tanTheta, 0], [0, 1, 0]], dtype=float64)
+    height, width = source.shape[:2]
+    return warpAffine(source, mat, (int(width + height * tanTheta), height))
+
+
+def resize_to(source: Image, width: int) -> Image:
+    scale: float = width / source.shape[1]
+    return resize(
+        source, (width, int(source.shape[0] * scale)), interpolation=cv2.INTER_LANCZOS4
+    )
 
 
 def check() -> bool:
@@ -103,11 +168,11 @@ def load_image(path: str) -> bool:
     return image is not None
 
 
-# def image_to_text(path: str) -> str:
-#     results: list[Result] = reader.readtext(path)
-#     for result in results:
-#         print(result[1])
-#     return ", ".join(r[1] for r in results)
+def image_to_text(path: str) -> str:
+    results: list[Character] = reader.readtext(path)
+    for result in results:
+        print(result[1])
+    return ", ".join(r[1] for r in results)
 
 
 def show_image(title: str, image: Image) -> None:
