@@ -41,29 +41,12 @@ def run() -> None:
             continue
 
         studentsBounding = get_students_bounding(resultBounding)
-        leftTeamImage, rightTeamImage = preprocess_students(grayscale, studentsBounding)
+        studentNameImages = preprocess_students(grayscale, studentsBounding)
 
-        leftTeamChars: list[Character] = reader.readtext(leftTeamImage)  # type: ignore
-        rightTeamChars: list[Character] = reader.readtext(rightTeamImage)  # type: ignore
-
-        pitch: int = int(
-            (leftTeamImage.shape[1] + rightTeamImage.shape[1]) / 1844.0 * 113
-        )
-        print(f"pitch: {pitch}")
-
-        for char in leftTeamChars:
-            print(char)
-            rectangle(leftTeamImage, char[0][0], char[0][2], 0, 1)
-        print(groupCharacters(leftTeamChars, pitch))
-        show_image(path, leftTeamImage)
-
-        for char in rightTeamChars:
-            print(char)
-            rectangle(rightTeamImage, char[0][0], char[0][2], 0, 1)
-        print(groupCharacters(rightTeamChars, pitch))
-        show_image(path, rightTeamImage)
-
-        print(", ".join(r[1] for r in (leftTeamChars + rightTeamChars)))
+        for studentNameImage in studentNameImages:
+            chars: list[Character] = reader.readtext(studentNameImage, paragraph=True)  # type: ignore
+            print("".join(c[1] for c in chars).replace(" ", ""))
+            # show_detection_result(studentNameImage, chars)
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
@@ -95,12 +78,7 @@ def get_students_bounding(bounding: Bounding) -> Bounding:
     return (left, footerTop, right, bottom)
 
 
-def cutout_image(image: Image, bounding: Bounding) -> Image:
-    (left, top, right, bottom) = bounding
-    return image[top:bottom, left:right]
-
-
-def preprocess_students(grayscale: Image, bounding: Bounding) -> tuple[Image, Image]:
+def preprocess_students(grayscale: Image, bounding: Bounding) -> list[Image]:
     footer: Image = cutout_image(grayscale, bounding)
     WIDTH: int = 4000
     resized: Image = resize_to(footer, WIDTH)
@@ -115,32 +93,24 @@ def preprocess_students(grayscale: Image, bounding: Bounding) -> tuple[Image, Im
     leveled: Image = LUT(skewed, y).astype(numpy.uint8)
 
     height: int = leveled.shape[1]
-    center: int = WIDTH // 2
-    MARGIN: int = 100
 
-    return (
-        leveled[0:height, MARGIN:center],
-        leveled[0:height, center : (WIDTH - MARGIN)],
+    results: list[Image] = list()
+    pitch: int = int(WIDTH / 1844 * 113)
+    LEFT_TEAM_LEFT: int = 216
+    for x in range(LEFT_TEAM_LEFT, LEFT_TEAM_LEFT + pitch * 6, pitch):
+        results.append(leveled[0:height, x : (x + pitch)])
+    RIGHT_TEAM_LEFT: int = WIDTH // 2 + 292
+    for x in range(RIGHT_TEAM_LEFT, RIGHT_TEAM_LEFT + pitch * 6, pitch):
+        results.append(leveled[0:height, x : (x + pitch)])
+
+    return results
+
+
+def resize_to(source: Image, width: int) -> Image:
+    scale: float = width / source.shape[1]
+    return resize(
+        source, (width, int(source.shape[0] * scale)), interpolation=cv2.INTER_LANCZOS4
     )
-
-
-def groupCharacters(chars: list[Character], pitch: int) -> list[str]:
-    leftmost: int = 9999999
-    rightmost: int = 0
-    for char in chars:
-        leftmost = min(leftmost, char[0][0][0])
-        rightmost = max(rightmost, char[0][2][0])
-    students: list[str] = list()
-    margin: int = pitch // 10
-    for groupX in range(leftmost, rightmost, pitch):
-        buffer: str = ""
-        for char in chars:
-            x: int = char[0][0][0]
-            if x >= groupX - margin and x < groupX + pitch - margin:
-                buffer += char[1]
-        if len(buffer) > 0:
-            students.append(buffer)
-    return students
 
 
 def skew(source: Image, degree: float) -> Image:
@@ -150,11 +120,23 @@ def skew(source: Image, degree: float) -> Image:
     return warpAffine(source, mat, (int(width + height * tanTheta), height))
 
 
-def resize_to(source: Image, width: int) -> Image:
-    scale: float = width / source.shape[1]
-    return resize(
-        source, (width, int(source.shape[0] * scale)), interpolation=cv2.INTER_LANCZOS4
-    )
+def cutout_image(image: Image, bounding: Bounding) -> Image:
+    (left, top, right, bottom) = bounding
+    return image[top:bottom, left:right]
+
+
+def show_image(title: str, image: Image) -> None:
+    cv2.imshow(title, image)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+
+def show_detection_result(image: Image, chars: list[Character]) -> None:
+    title: str = ""
+    for char in chars:
+        rectangle(image, char[0][0], char[0][2], 0, 1)
+        title += char[1]
+    show_image(title, image)
 
 
 def check() -> bool:
@@ -173,9 +155,3 @@ def image_to_text(path: str) -> str:
     for result in results:
         print(result[1])
     return ", ".join(r[1] for r in results)
-
-
-def show_image(title: str, image: Image) -> None:
-    cv2.imshow(title, image)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
