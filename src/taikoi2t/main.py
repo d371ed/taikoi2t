@@ -1,3 +1,4 @@
+import csv
 import sys
 
 import cv2
@@ -19,6 +20,16 @@ reader = easyocr.Reader(["ja", "en"])
 
 
 def run() -> None:
+    with open("./students.csv", "r", encoding="utf-8") as studentsFile:
+        studentDictionary: list[tuple[str, str]] = [
+            (row[0], row[1]) for row in csv.reader(studentsFile)
+        ]
+
+    studentCharAllowList: str = (
+        "".join(set("".join(s[0] for s in studentDictionary))) + "()"
+    )
+    print(studentCharAllowList)
+
     for path in sys.argv[1:]:
         source: Image = imread(path)
         if source is None:
@@ -36,7 +47,9 @@ def run() -> None:
 
         detectedNames: list[str] = list()
         for studentNameImage in studentNameImages:
-            chars: list[Character] = reader.readtext(studentNameImage, paragraph=True)  # type: ignore
+            chars: list[Character] = reader.readtext(  # type: ignore
+                studentNameImage, paragraph=True, allowlist=studentCharAllowList
+            )  # type: ignore
             detectedNames.append("".join(c[1] for c in chars).replace(" ", ""))
 
         print(detectedNames)
