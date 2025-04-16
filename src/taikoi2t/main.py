@@ -1,6 +1,7 @@
 import csv
 import sys
-from typing import cast
+from itertools import chain
+from typing import Dict, Iterable, List, Sequence, Tuple
 
 import cv2
 import easyocr  # type: ignore
@@ -14,6 +15,7 @@ from cv2 import (
 )
 from rapidfuzz import process
 
+from taikoi2t import utils
 from taikoi2t.image import (
     Image,
     cutout_image,
@@ -29,7 +31,7 @@ reader = easyocr.Reader(["ja", "en"])
 
 def run() -> None:
     with open("./students.csv", "r", encoding="utf-8") as students_file:
-        student_dictionary: list[tuple[str, str]] = [
+        student_dictionary: List[Tuple[str, str]] = [
             (normalize_student_name(row[0]), row[1])
             for row in csv.reader(students_file)
         ]
@@ -37,13 +39,8 @@ def run() -> None:
     char_allow_list: str = (
         "".join(set("".join(s[0] for s in student_dictionary))) + "()"
     )
-    # print(char_allow_list)
-
-    ordered_students: list[str] = [pair[0] for pair in student_dictionary]
-    # print(ordered_students)
-
-    student_mapping: dict[str, str] = dict(student_dictionary)
-    # print(student_mapping)
+    ordered_students: List[str] = [pair[0] for pair in student_dictionary]
+    student_mapping: Dict[str, str] = dict(student_dictionary)
 
     for path in sys.argv[1:]:
         source: Image = imread(path)
@@ -58,73 +55,36 @@ def run() -> None:
         students_bounding = get_students_bounding(result_bounding)
         student_name_images = preprocess_students(grayscale, students_bounding)
 
-        detected_student_names: list[str] = list()
+        detected_student_names: List[str] = list()
         for student_name_image in student_name_images:
-            chars: list[Character] = reader.readtext(  # type: ignore
+            chars: List[Character] = reader.readtext(  # type: ignore
                 student_name_image, paragraph=True, allowlist=char_allow_list
             )  # type: ignore
             detected_student_names.append(
                 normalize_student_name("".join(c[1] for c in chars).replace(" ", ""))
             )
 
-        # print(detected_student_names)
-
-        matched_student_names: list[str] = [
-            process.extractOne(detected, ordered_students)[0]
+        matched_student_names: List[str] = [
+            process.extractOne(detected, ordered_students)[0] if detected != "" else ""
             for detected in detected_student_names
         ]
-        # print(matched_student_names)
 
-        if len(matched_student_names) != 12:
+        if len(matched_student_names) < 12:
             continue
+        (left_st, left_sp) = split_team(matched_student_names[0:6])
+        (right_st, right_sp) = split_team(matched_student_names[6:12])
 
-        left_team_strikers: Strikers = cast(Strikers, matched_student_names[0:4])
-        left_team_specials: Specials = cast(Specials, matched_student_names[4:6])
-
-        right_team_strikers: Strikers = cast(Strikers, matched_student_names[6:10])
-        right_team_specials: Specials = cast(Specials, matched_student_names[10:12])
-
-        if ordered_students.index(left_team_specials[0]) > ordered_students.index(
-            left_team_specials[1]
-        ):
-            left_team_specials = cast(Specials, tuple(reversed(left_team_specials)))
-        if ordered_students.index(right_team_specials[0]) > ordered_students.index(
-            right_team_specials[1]
-        ):
-            right_team_specials = cast(Specials, tuple(reversed(right_team_specials)))
-
-        # print(
-        #     (
-        #         (left_team_strikers, left_team_specials),
-        #         (right_team_strikers, right_team_specials),
-        #     )
-        # )
-
-        mapped_left_team: list[str] = list(
-            (name if student_mapping[name] == "" else student_mapping[name])
-            for name in (left_team_strikers + left_team_specials)
+        mapped_left_team = apply_alias(
+            chain(left_st, sort_specials(left_sp, ordered_students)), student_mapping
         )
         print(mapped_left_team)
 
-        mapped_right_team: list[str] = list(
-            (name if student_mapping[name] == "" else student_mapping[name])
-            for name in (right_team_strikers + right_team_specials)
+        mapped_right_team = apply_alias(
+            chain(right_st, sort_specials(right_sp, ordered_students)), student_mapping
         )
         print(mapped_right_team)
 
-        result_width: int = result_bounding[2] - result_bounding[0]
-        result_height: int = result_bounding[3] - result_bounding[1]
-        left_result_bounding: Bounding = (
-            result_width // 12 + result_bounding[0],
-            result_height // 5 + result_bounding[1],
-            result_width // 6 + result_bounding[0],
-            result_height // 4 + result_bounding[1],
-        )
-        left_result_image: Image = cutout_image(
-            cvtColor(source, cv2.COLOR_BGR2HSV), left_result_bounding
-        )
-        saturation: int = cv2.mean(left_result_image)[1]
-        left_wins: bool = saturation > 50
+        left_wins: bool = check_left_team_wins(source, result_bounding)
         print("win" if left_wins else "lose")
 
 
@@ -138,7 +98,7 @@ def find_result_bounding(grayscale: Image) -> Bounding | None:
     contours, _ = findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contours:
-        bounding: list[int] = boundingRect(approxPolyDP(contour, 3, True))
+        bounding: List[int] = boundingRect(approxPolyDP(contour, 3, True))
         if len(bounding) < 4:
             continue
 
@@ -150,14 +110,14 @@ def find_result_bounding(grayscale: Image) -> Bounding | None:
 
 def get_students_bounding(bounding: Bounding) -> Bounding:
     FOOTER_RATIO: float = 0.085
-    (left, top, right, bottom) = bounding
-    height: int = bottom - top
+    (left, _, right, bottom) = bounding
+    (_, height) = utils.size(bounding)
     footer_height = int(FOOTER_RATIO * height)
     footer_top = int(bottom - footer_height)
     return (left, footer_top, right, bottom)
 
 
-def preprocess_students(grayscale: Image, bounding: Bounding) -> list[Image]:
+def preprocess_students(grayscale: Image, bounding: Bounding) -> List[Image]:
     WIDTH: int = 4000
     PITCH_RATIO: float = 113 / 1844
     PITCH: int = int(WIDTH * PITCH_RATIO)
@@ -169,7 +129,7 @@ def preprocess_students(grayscale: Image, bounding: Bounding) -> list[Image]:
     leveled: Image = level_contrast(skewed, 112, 192)
 
     height: int = leveled.shape[1]
-    results: list[Image] = list()
+    results: List[Image] = list()
     L_TEAM_LEFT: int = 216
     for x in range(L_TEAM_LEFT, L_TEAM_LEFT + TEAM_WIDTH, PITCH):
         results.append(leveled[0:height, x : (x + PITCH)])
@@ -178,6 +138,47 @@ def preprocess_students(grayscale: Image, bounding: Bounding) -> list[Image]:
         results.append(leveled[0:height, x : (x + PITCH)])
 
     return results
+
+
+def check_left_team_wins(source: Image, result_bounding: Bounding) -> bool:
+    (left, top, _, _) = result_bounding
+    (width, height) = utils.size(result_bounding)
+
+    bounding: Bounding = (
+        width // 12 + left,
+        height // 5 + top,
+        width // 6 + left,
+        height // 4 + top,
+    )
+    win_or_lose_image: Image = cutout_image(source, bounding)
+
+    mean_saturation: int = cv2.mean(cvtColor(win_or_lose_image, cv2.COLOR_BGR2HSV))[1]
+    # 'Win' has more vivid color than 'Lose'
+    return mean_saturation > 50
+
+
+def split_team(students: Sequence[str]) -> Tuple[Strikers, Specials]:
+    ss: Sequence[str] = (
+        list(chain(students, [""] * (6 - len(students))))
+        if len(students) < 6
+        else students
+    )
+    return (
+        (ss[0], ss[1], ss[2], ss[3]),
+        (ss[4], ss[5]),
+    )
+
+
+def sort_specials(specials: Specials, ordered_students: Sequence[str]) -> Specials:
+    return (
+        (specials[1], specials[0])
+        if ordered_students.index(specials[0]) > ordered_students.index(specials[1])
+        else (specials[0], specials[1])
+    )
+
+
+def apply_alias(names: Iterable[str], mapping: Dict[str, str]) -> List[str]:
+    return [(name if mapping[name] == "" else mapping[name]) for name in names]
 
 
 def normalize_student_name(name: str) -> str:
