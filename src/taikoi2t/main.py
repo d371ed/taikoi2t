@@ -22,21 +22,22 @@ reader = easyocr.Reader(["ja", "en"])
 
 
 def run() -> None:
-    with open("./students.csv", "r", encoding="utf-8") as studentsFile:
-        studentDictionary: list[tuple[str, str]] = [
-            (normalizeStudentName(row[0]), row[1]) for row in csv.reader(studentsFile)
+    with open("./students.csv", "r", encoding="utf-8") as students_file:
+        student_dictionary: list[tuple[str, str]] = [
+            (normalize_student_name(row[0]), row[1])
+            for row in csv.reader(students_file)
         ]
 
-    studentCharAllowList: str = (
-        "".join(set("".join(s[0] for s in studentDictionary))) + "()"
+    char_allow_list: str = (
+        "".join(set("".join(s[0] for s in student_dictionary))) + "()"
     )
-    print(studentCharAllowList)
+    print(char_allow_list)
 
-    studentKeys: list[str] = [pair[0] for pair in studentDictionary]
-    print(studentKeys)
+    ordered_students: list[str] = [pair[0] for pair in student_dictionary]
+    print(ordered_students)
 
-    studentMapping: dict[str, str] = dict(studentDictionary)
-    print(studentMapping)
+    student_mapping: dict[str, str] = dict(student_dictionary)
+    print(student_mapping)
 
     for path in sys.argv[1:]:
         source: Image = imread(path)
@@ -46,72 +47,73 @@ def run() -> None:
 
         grayscale: Image = cvtColor(source, cv2.COLOR_BGR2GRAY)
 
-        resultBounding = find_result_bounding(grayscale)
-        if resultBounding is None:
+        result_bounding = find_result_bounding(grayscale)
+        if result_bounding is None:
             continue
 
-        studentsBounding = get_students_bounding(resultBounding)
-        studentNameImages = preprocess_students(grayscale, studentsBounding)
+        students_bounding = get_students_bounding(result_bounding)
+        student_name_images = preprocess_students(grayscale, students_bounding)
 
-        detectedNames: list[str] = list()
-        for studentNameImage in studentNameImages:
+        detected_student_names: list[str] = list()
+        for student_name_image in student_name_images:
             chars: list[Character] = reader.readtext(  # type: ignore
-                studentNameImage, paragraph=True, allowlist=studentCharAllowList
+                student_name_image, paragraph=True, allowlist=char_allow_list
             )  # type: ignore
-            detectedNames.append(
-                normalizeStudentName("".join(c[1] for c in chars).replace(" ", ""))
+            detected_student_names.append(
+                normalize_student_name("".join(c[1] for c in chars).replace(" ", ""))
             )
 
-        print(detectedNames)
+        print(detected_student_names)
 
-        matchedNames: list[str] = [
-            process.extractOne(detected, studentKeys)[0] for detected in detectedNames
+        matched_student_names: list[str] = [
+            process.extractOne(detected, ordered_students)[0]
+            for detected in detected_student_names
         ]
-        print(matchedNames)
+        print(matched_student_names)
 
-        if len(matchedNames) != 12:
+        if len(matched_student_names) != 12:
             continue
 
-        leftTeamStrikers: Strikers = cast(Strikers, matchedNames[0:4])
-        leftTeamSpecials: Specials = cast(Specials, matchedNames[4:6])
+        left_team_strikers: Strikers = cast(Strikers, matched_student_names[0:4])
+        left_team_specials: Specials = cast(Specials, matched_student_names[4:6])
 
-        rightTeamStrikers: Strikers = cast(Strikers, matchedNames[6:10])
-        rightTeamSpecials: Specials = cast(Specials, matchedNames[10:12])
+        right_team_strikers: Strikers = cast(Strikers, matched_student_names[6:10])
+        right_team_specials: Specials = cast(Specials, matched_student_names[10:12])
 
-        if studentKeys.index(leftTeamSpecials[0]) > studentKeys.index(
-            leftTeamSpecials[1]
+        if ordered_students.index(left_team_specials[0]) > ordered_students.index(
+            left_team_specials[1]
         ):
-            leftTeamSpecials = cast(Specials, tuple(reversed(leftTeamSpecials)))
-        if studentKeys.index(rightTeamSpecials[0]) > studentKeys.index(
-            rightTeamSpecials[1]
+            left_team_specials = cast(Specials, tuple(reversed(left_team_specials)))
+        if ordered_students.index(right_team_specials[0]) > ordered_students.index(
+            right_team_specials[1]
         ):
-            rightTeamSpecials = cast(Specials, tuple(reversed(rightTeamSpecials)))
+            right_team_specials = cast(Specials, tuple(reversed(right_team_specials)))
 
         print(
             (
-                (leftTeamStrikers, leftTeamSpecials),
-                (rightTeamStrikers, rightTeamSpecials),
+                (left_team_strikers, left_team_specials),
+                (right_team_strikers, right_team_specials),
             )
         )
 
-        mappedLeftTeam: list[str] = list(
-            (name if studentMapping[name] == "" else studentMapping[name])
-            for name in (leftTeamStrikers + leftTeamSpecials)
+        mapped_left_team: list[str] = list(
+            (name if student_mapping[name] == "" else student_mapping[name])
+            for name in (left_team_strikers + left_team_specials)
         )
-        print(mappedLeftTeam)
+        print(mapped_left_team)
 
-        mappedRightTeam: list[str] = list(
-            (name if studentMapping[name] == "" else studentMapping[name])
-            for name in (rightTeamStrikers + rightTeamSpecials)
+        mapped_right_team: list[str] = list(
+            (name if student_mapping[name] == "" else student_mapping[name])
+            for name in (right_team_strikers + right_team_specials)
         )
-        print(mappedRightTeam)
+        print(mapped_right_team)
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
     RESULT_RATIO: float = 0.43
     RATIO_EPS: float = 0.05
 
-    sourceWidth: int = grayscale.shape[1]
+    source_width: int = grayscale.shape[1]
 
     binary: Image = threshold(grayscale, 0, 255, cv2.THRESH_OTSU)[1]
     contours, _ = findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -123,7 +125,7 @@ def find_result_bounding(grayscale: Image) -> Bounding | None:
 
         [left, top, width, height] = bounding
         ratio: float = height / width
-        if width > sourceWidth / 2 and abs(ratio - RESULT_RATIO) < RATIO_EPS:
+        if width > source_width / 2 and abs(ratio - RESULT_RATIO) < RATIO_EPS:
             return (left, top, left + width, top + height)
 
 
@@ -131,9 +133,9 @@ def get_students_bounding(bounding: Bounding) -> Bounding:
     FOOTER_RATIO: float = 0.085
     (left, top, right, bottom) = bounding
     height: int = bottom - top
-    footerHeight = int(FOOTER_RATIO * height)
-    footerTop = int(bottom - footerHeight)
-    return (left, footerTop, right, bottom)
+    footer_height = int(FOOTER_RATIO * height)
+    footer_top = int(bottom - footer_height)
+    return (left, footer_top, right, bottom)
 
 
 def preprocess_students(grayscale: Image, bounding: Bounding) -> list[Image]:
@@ -159,5 +161,5 @@ def preprocess_students(grayscale: Image, bounding: Bounding) -> list[Image]:
     return results
 
 
-def normalizeStudentName(name: str) -> str:
+def normalize_student_name(name: str) -> str:
     return name.replace("(", "（").replace(")", "）")

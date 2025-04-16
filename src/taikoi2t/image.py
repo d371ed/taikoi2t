@@ -21,10 +21,10 @@ def resize_to(source: Image, width: int) -> Image:
 
 
 def skew(source: Image, degree: float) -> Image:
-    tanTheta: float = math.tan(math.radians(degree))
-    mat = numpy.array([[1, tanTheta, 0], [0, 1, 0]], dtype=numpy.float64)
+    tan_theta: float = math.tan(math.radians(degree))
+    mat = numpy.array([[1, tan_theta, 0], [0, 1, 0]], dtype=numpy.float64)
     height, width = source.shape[:2]
-    return warpAffine(source, mat, (int(width + height * tanTheta), height))
+    return warpAffine(source, mat, (int(width + height * tan_theta), height))
 
 
 def cutout_image(image: Image, bounding: Bounding) -> Image:
