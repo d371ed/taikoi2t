@@ -35,6 +35,9 @@ def run() -> None:
     studentKeys: list[str] = [pair[0] for pair in studentDictionary]
     print(studentKeys)
 
+    studentMapping: dict[str, str] = dict(studentDictionary)
+    print(studentMapping)
+
     for path in sys.argv[1:]:
         source: Image = imread(path)
         if source is None:
@@ -90,6 +93,18 @@ def run() -> None:
                 (rightTeamStrikers, rightTeamSpecials),
             )
         )
+
+        mappedLeftTeam: list[str] = list(
+            (name if studentMapping[name] == "" else studentMapping[name])
+            for name in (leftTeamStrikers + leftTeamSpecials)
+        )
+        print(mappedLeftTeam)
+
+        mappedRightTeam: list[str] = list(
+            (name if studentMapping[name] == "" else studentMapping[name])
+            for name in (rightTeamStrikers + rightTeamSpecials)
+        )
+        print(mappedRightTeam)
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
