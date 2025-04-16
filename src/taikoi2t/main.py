@@ -14,7 +14,13 @@ from cv2 import (
 )
 from rapidfuzz import process
 
-from taikoi2t.image import Image, cutout_image, level_contrast, resize_to, skew
+from taikoi2t.image import (
+    Image,
+    cutout_image,
+    level_contrast,
+    resize_to,
+    skew,
+)
 from taikoi2t.ocr import Character
 from taikoi2t.types import Bounding, Specials, Strikers
 
@@ -31,18 +37,16 @@ def run() -> None:
     char_allow_list: str = (
         "".join(set("".join(s[0] for s in student_dictionary))) + "()"
     )
-    print(char_allow_list)
+    # print(char_allow_list)
 
     ordered_students: list[str] = [pair[0] for pair in student_dictionary]
-    print(ordered_students)
+    # print(ordered_students)
 
     student_mapping: dict[str, str] = dict(student_dictionary)
-    print(student_mapping)
+    # print(student_mapping)
 
     for path in sys.argv[1:]:
         source: Image = imread(path)
-        if source is None:
-            continue
         print(f"=== {path} ===")
 
         grayscale: Image = cvtColor(source, cv2.COLOR_BGR2GRAY)
@@ -63,13 +67,13 @@ def run() -> None:
                 normalize_student_name("".join(c[1] for c in chars).replace(" ", ""))
             )
 
-        print(detected_student_names)
+        # print(detected_student_names)
 
         matched_student_names: list[str] = [
             process.extractOne(detected, ordered_students)[0]
             for detected in detected_student_names
         ]
-        print(matched_student_names)
+        # print(matched_student_names)
 
         if len(matched_student_names) != 12:
             continue
@@ -89,12 +93,12 @@ def run() -> None:
         ):
             right_team_specials = cast(Specials, tuple(reversed(right_team_specials)))
 
-        print(
-            (
-                (left_team_strikers, left_team_specials),
-                (right_team_strikers, right_team_specials),
-            )
-        )
+        # print(
+        #     (
+        #         (left_team_strikers, left_team_specials),
+        #         (right_team_strikers, right_team_specials),
+        #     )
+        # )
 
         mapped_left_team: list[str] = list(
             (name if student_mapping[name] == "" else student_mapping[name])
@@ -107,6 +111,21 @@ def run() -> None:
             for name in (right_team_strikers + right_team_specials)
         )
         print(mapped_right_team)
+
+        result_width: int = result_bounding[2] - result_bounding[0]
+        result_height: int = result_bounding[3] - result_bounding[1]
+        left_result_bounding: Bounding = (
+            result_width // 12 + result_bounding[0],
+            result_height // 5 + result_bounding[1],
+            result_width // 6 + result_bounding[0],
+            result_height // 4 + result_bounding[1],
+        )
+        left_result_image: Image = cutout_image(
+            cvtColor(source, cv2.COLOR_BGR2HSV), left_result_bounding
+        )
+        saturation: int = cv2.mean(left_result_image)[1]
+        left_wins: bool = saturation > 50
+        print("win" if left_wins else "lose")
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
