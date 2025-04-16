@@ -11,6 +11,7 @@ from cv2 import (
     imread,
     threshold,
 )
+from rapidfuzz import process
 
 from taikoi2t.image import Image, cutout_image, level_contrast, resize_to, skew
 from taikoi2t.ocr import Character
@@ -22,13 +23,16 @@ reader = easyocr.Reader(["ja", "en"])
 def run() -> None:
     with open("./students.csv", "r", encoding="utf-8") as studentsFile:
         studentDictionary: list[tuple[str, str]] = [
-            (row[0], row[1]) for row in csv.reader(studentsFile)
+            (normalizeStudentName(row[0]), row[1]) for row in csv.reader(studentsFile)
         ]
 
     studentCharAllowList: str = (
         "".join(set("".join(s[0] for s in studentDictionary))) + "()"
     )
     print(studentCharAllowList)
+
+    studentKeys: list[str] = [pair[0] for pair in studentDictionary]
+    print(studentKeys)
 
     for path in sys.argv[1:]:
         source: Image = imread(path)
@@ -50,9 +54,16 @@ def run() -> None:
             chars: list[Character] = reader.readtext(  # type: ignore
                 studentNameImage, paragraph=True, allowlist=studentCharAllowList
             )  # type: ignore
-            detectedNames.append("".join(c[1] for c in chars).replace(" ", ""))
+            detectedNames.append(
+                normalizeStudentName("".join(c[1] for c in chars).replace(" ", ""))
+            )
 
         print(detectedNames)
+
+        matchedNames: list[str] = [
+            process.extractOne(detected, studentKeys)[0] for detected in detectedNames
+        ]
+        print(matchedNames)
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
@@ -105,3 +116,7 @@ def preprocess_students(grayscale: Image, bounding: Bounding) -> list[Image]:
         results.append(leveled[0:height, x : (x + PITCH)])
 
     return results
+
+
+def normalizeStudentName(name: str) -> str:
+    return name.replace("(", "（").replace(")", "）")

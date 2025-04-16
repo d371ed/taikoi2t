@@ -9,7 +9,8 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "easyocr (>=1.7.2,<2.0.0)",
-    "opencv-python (>=4.11.0.86,<5.0.0.0)"
+    "opencv-python (>=4.11.0.86,<5.0.0.0)",
+    "rapidfuzz (>=3.13.0,<4.0.0)"
 ]
 
 [project.scripts]
