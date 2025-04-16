@@ -1,5 +1,6 @@
 import csv
 import sys
+from typing import cast
 
 import cv2
 import easyocr  # type: ignore
@@ -15,7 +16,7 @@ from rapidfuzz import process
 
 from taikoi2t.image import Image, cutout_image, level_contrast, resize_to, skew
 from taikoi2t.ocr import Character
-from taikoi2t.types import Bounding
+from taikoi2t.types import Bounding, Specials, Strikers
 
 reader = easyocr.Reader(["ja", "en"])
 
@@ -64,6 +65,31 @@ def run() -> None:
             process.extractOne(detected, studentKeys)[0] for detected in detectedNames
         ]
         print(matchedNames)
+
+        if len(matchedNames) != 12:
+            continue
+
+        leftTeamStrikers: Strikers = cast(Strikers, matchedNames[0:4])
+        leftTeamSpecials: Specials = cast(Specials, matchedNames[4:6])
+
+        rightTeamStrikers: Strikers = cast(Strikers, matchedNames[6:10])
+        rightTeamSpecials: Specials = cast(Specials, matchedNames[10:12])
+
+        if studentKeys.index(leftTeamSpecials[0]) > studentKeys.index(
+            leftTeamSpecials[1]
+        ):
+            leftTeamSpecials = cast(Specials, tuple(reversed(leftTeamSpecials)))
+        if studentKeys.index(rightTeamSpecials[0]) > studentKeys.index(
+            rightTeamSpecials[1]
+        ):
+            rightTeamSpecials = cast(Specials, tuple(reversed(rightTeamSpecials)))
+
+        print(
+            (
+                (leftTeamStrikers, leftTeamSpecials),
+                (rightTeamStrikers, rightTeamSpecials),
+            )
+        )
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
