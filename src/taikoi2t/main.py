@@ -23,7 +23,7 @@ from taikoi2t.image import (
     resize_to,
     skew,
 )
-from taikoi2t.ocr import Character
+from taikoi2t.ocr import Character, join_chars
 from taikoi2t.types import Bounding, Specials, Strikers
 
 reader = easyocr.Reader(["ja", "en"])
@@ -56,13 +56,12 @@ def run() -> None:
         student_name_images = preprocess_students(grayscale, students_bounding)
 
         detected_student_names: List[str] = list()
-        for student_name_image in student_name_images:
+        for image in student_name_images:
             chars: List[Character] = reader.readtext(  # type: ignore
-                student_name_image, paragraph=True, allowlist=char_allow_list
+                image, paragraph=True, allowlist=char_allow_list
             )  # type: ignore
-            detected_student_names.append(
-                normalize_student_name("".join(c[1] for c in chars).replace(" ", ""))
-            )
+            name = normalize_student_name(join_chars(chars))
+            detected_student_names.append(name)
 
         matched_student_names: List[str] = [
             process.extractOne(detected, ordered_students)[0] if detected != "" else ""
@@ -77,15 +76,20 @@ def run() -> None:
         mapped_left_team = apply_alias(
             chain(left_st, sort_specials(left_sp, ordered_students)), student_mapping
         )
-        print(mapped_left_team)
-
         mapped_right_team = apply_alias(
             chain(right_st, sort_specials(right_sp, ordered_students)), student_mapping
         )
-        print(mapped_right_team)
 
-        left_wins: bool = check_left_team_wins(source, result_bounding)
-        print("win" if left_wins else "lose")
+        left_wins = check_left_team_wins(source, result_bounding)
+        right_player_name = detect_right_player_name(grayscale, result_bounding)
+
+        row: List[str] = (
+            ["TRUE" if left_wins else "FALSE"]
+            + mapped_left_team
+            + [right_player_name]
+            + mapped_right_team
+        )
+        print(row)
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
@@ -155,6 +159,22 @@ def check_left_team_wins(source: Image, result_bounding: Bounding) -> bool:
     mean_saturation: int = cv2.mean(cvtColor(win_or_lose_image, cv2.COLOR_BGR2HSV))[1]
     # 'Win' has more vivid color than 'Lose'
     return mean_saturation > 50
+
+
+def detect_right_player_name(grayscale: Image, result_bounding: Bounding) -> str:
+    (left, top, _, _) = result_bounding
+    (width, height) = utils.size(result_bounding)
+
+    bounding: Bounding = (
+        width * 5 // 6 + left,
+        height // 7 + top,
+        width + left,
+        height // 5 + top,
+    )
+    player_image: Image = cutout_image(grayscale, bounding)
+
+    detected_chars: List[Character] = reader.readtext(player_image)  # type: ignore
+    return join_chars(detected_chars)
 
 
 def split_team(students: Sequence[str]) -> Tuple[Strikers, Specials]:
