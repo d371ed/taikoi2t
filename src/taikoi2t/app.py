@@ -120,7 +120,7 @@ def run() -> None:
         if args.verbose:
             print(row)
         else:
-            print(",".join(row))
+            print("\t".join(row))
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
