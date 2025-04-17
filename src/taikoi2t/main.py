@@ -1,5 +1,4 @@
 import csv
-import sys
 from itertools import chain
 from typing import Dict, Iterable, List, Sequence, Tuple
 
@@ -16,6 +15,7 @@ from cv2 import (
 from rapidfuzz import process
 
 from taikoi2t import utils
+from taikoi2t.args import parse_args
 from taikoi2t.image import (
     Image,
     cutout_image,
@@ -26,11 +26,11 @@ from taikoi2t.image import (
 from taikoi2t.ocr import Character, join_chars
 from taikoi2t.types import Bounding, Specials, Strikers
 
-reader = easyocr.Reader(["ja", "en"])
-
 
 def run() -> None:
-    with open("./students.csv", "r", encoding="utf-8") as students_file:
+    args = parse_args()
+
+    with args.dictionary.open(mode="r", encoding="utf-8") as students_file:
         student_dictionary: List[Tuple[str, str]] = [
             (normalize_student_name(row[0]), row[1])
             for row in csv.reader(students_file)
@@ -42,8 +42,10 @@ def run() -> None:
     ordered_students: List[str] = [pair[0] for pair in student_dictionary]
     student_mapping: Dict[str, str] = dict(student_dictionary)
 
-    for path in sys.argv[1:]:
-        source: Image = imread(path)
+    reader = easyocr.Reader(["ja", "en"])
+
+    for path in args.files:
+        source: Image = imread(path.as_posix())
         print(f"=== {path} ===")
 
         grayscale: Image = cvtColor(source, cv2.COLOR_BGR2GRAY)
@@ -81,12 +83,12 @@ def run() -> None:
         )
 
         left_wins = check_left_team_wins(source, result_bounding)
-        right_player_name = detect_right_player_name(grayscale, result_bounding)
+        opponent = detect_opponent(reader, grayscale, result_bounding)
 
         row: List[str] = (
             ["TRUE" if left_wins else "FALSE"]
             + mapped_left_team
-            + [right_player_name]
+            + [opponent]
             + mapped_right_team
         )
         print(row)
@@ -161,7 +163,9 @@ def check_left_team_wins(source: Image, result_bounding: Bounding) -> bool:
     return mean_saturation > 50
 
 
-def detect_right_player_name(grayscale: Image, result_bounding: Bounding) -> str:
+def detect_opponent(
+    reader: easyocr.Reader, grayscale: Image, result_bounding: Bounding
+) -> str:
     (left, top, _, _) = result_bounding
     (width, height) = utils.size(result_bounding)
 
@@ -171,9 +175,9 @@ def detect_right_player_name(grayscale: Image, result_bounding: Bounding) -> str
         width + left,
         height // 5 + top,
     )
-    player_image: Image = cutout_image(grayscale, bounding)
+    opponent_image: Image = cutout_image(grayscale, bounding)
 
-    detected_chars: List[Character] = reader.readtext(player_image)  # type: ignore
+    detected_chars: List[Character] = reader.readtext(opponent_image)  # type: ignore
     return join_chars(detected_chars)
 
 
