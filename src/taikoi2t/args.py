@@ -9,6 +9,7 @@ from typing import Sequence
 class Args:
     dictionary: Path
     opponent: bool
+    verbose: bool
     files: Sequence[Path]
 
 
@@ -19,6 +20,9 @@ def parse_args() -> type[Args]:
     )
     arg_parser.add_argument(
         "--opponent", action="store_true", help="include the name of opponent"
+    )
+    arg_parser.add_argument(
+        "--verbose", action="store_true", help="print messages for debug"
     )
     arg_parser.add_argument("files", type=Path, nargs="+")
 

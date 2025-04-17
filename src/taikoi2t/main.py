@@ -42,11 +42,12 @@ def run() -> None:
     ordered_students: List[str] = [pair[0] for pair in student_dictionary]
     student_mapping: Dict[str, str] = dict(student_dictionary)
 
-    reader = easyocr.Reader(["ja", "en"])
+    reader = easyocr.Reader(["ja", "en"], verbose=args.verbose)
 
     for path in args.files:
         source: Image = imread(path.as_posix())
-        print(f"=== {path} ===")
+        if args.verbose:
+            print(f"=== {path} ===")
 
         grayscale: Image = cvtColor(source, cv2.COLOR_BGR2GRAY)
 
@@ -91,7 +92,10 @@ def run() -> None:
             + [opponent]
             + mapped_right_team
         )
-        print(row)
+        if args.verbose:
+            print(row)
+        else:
+            print(",".join(row))
 
 
 def find_result_bounding(grayscale: Image) -> Bounding | None:
