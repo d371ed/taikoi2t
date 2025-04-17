@@ -45,7 +45,14 @@ def run() -> None:
     reader = easyocr.Reader(["ja", "en"], verbose=args.verbose)
 
     for path in args.files:
-        source: Image = imread(path.as_posix())
+        if not path.exists():
+            if args.verbose:
+                print(f"!!! READ ERROR: {path} !!!")
+            else:
+                print(",".join([""] * (14 if args.opponent else 13)))
+            continue
+
+        source: Image = imread(path.as_posix())  # TODO: error handling
         if args.verbose:
             print(f"=== {path} ===")
 
@@ -84,12 +91,14 @@ def run() -> None:
         )
 
         left_wins = check_left_team_wins(source, result_bounding)
-        opponent = detect_opponent(reader, grayscale, result_bounding)
+        opponent = (
+            detect_opponent(reader, grayscale, result_bounding) if args.opponent else ""
+        )
 
         row: List[str] = (
             ["TRUE" if left_wins else "FALSE"]
             + mapped_left_team
-            + [opponent]
+            + ([opponent] if args.opponent else [])
             + mapped_right_team
         )
         if args.verbose:
