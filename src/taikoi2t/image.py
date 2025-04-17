@@ -8,7 +8,7 @@ from cv2 import (
     warpAffine,
 )
 
-from taikoi2t.types import Bounding
+from taikoi2t.bounding import Bounding
 
 type Image = numpy.typing.NDArray[numpy.uint8]
 
@@ -47,6 +47,7 @@ def level_contrast(image: Image, x0: int, x1: int) -> Image:
     return LUT(image, y).astype(numpy.uint8)
 
 
+# for debug
 def show_image(image: Image, title: str = "") -> None:
     cv2.imshow(title, image)
     cv2.waitKey()

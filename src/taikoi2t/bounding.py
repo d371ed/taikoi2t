@@ -1,4 +1,6 @@
-from taikoi2t.types import Bounding
+from typing import Tuple
+
+type Bounding = Tuple[int, int, int, int]
 
 
 def size(bounding: Bounding) -> tuple[int, int]:

@@ -11,6 +11,7 @@ def join_chars(chars: Iterable[Character]) -> str:
     return "".join(c[1] for c in chars).replace(" ", "")
 
 
+# for debug
 def show_detection_result(image: Image, chars: list[Character]) -> None:
     title: str = ""
     for char in chars:
