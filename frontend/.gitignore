@@ -1,3 +1,5 @@
 *.jpg
 *.png
 result.tsv
+user-settings.bat
+backup
