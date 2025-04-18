@@ -27,6 +27,3 @@ opencv-stubs = "^0.0.11"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry-pyinstaller-plugin.scripts]
-taikoi2t = { source = "src/taikoi2t/main.py", type = "onefile", bundle = true }
