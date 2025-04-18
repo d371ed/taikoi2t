@@ -1,6 +1,7 @@
 @echo off
 
 set APP_PATH=..
+set DICTIONARY_CSV=..\students.csv
 set OUT_FILE=.\result.tsv
 set BACKUP_DIR=.\backup
 
