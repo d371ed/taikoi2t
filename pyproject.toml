@@ -10,9 +10,10 @@ requires-python = ">=3.13"
 dependencies = [
     "easyocr (>=1.7.2,<2.0.0)",
     "opencv-python (>=4.11.0.86,<5.0.0.0)",
-    "rapidfuzz (>=3.13.0,<4.0.0)"
+    "rapidfuzz (>=3.13.0,<4.0.0)",
+    "torch @ https://download.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp313-cp313-win_amd64.whl",
+    "torchvision @ https://download.pytorch.org/whl/cu124/torchvision-0.21.0%2Bcu124-cp313-cp313-win_amd64.whl"
 ]
-
 [project.scripts]
 main = "taikoi2t.app:run"
 
