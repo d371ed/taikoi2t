@@ -7,6 +7,7 @@ set BACKUP_DIR=.\backup
 
 call .\user-settings.bat
 
+set TARGET_TIME_MIN=5
 set RUN_OPTIONS=--opponent
 set IMAGE_FETCH_DIR=%SELF_FETCH_DIR%
 

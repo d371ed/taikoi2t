@@ -1,11 +1,12 @@
 $imageFetchDir = [System.Environment]::GetEnvironmentVariable("IMAGE_FETCH_DIR", "Process")
+$targetTimeMin = [System.Environment]::GetEnvironmentVariable("TARGET_TIME_MIN", "Process")
 $appPath = [System.Environment]::GetEnvironmentVariable("APP_PATH", "Process")
 $dictionaryCsv = [System.Environment]::GetEnvironmentVariable("DICTIONARY_CSV", "Process")
 $runOptions = [System.Environment]::GetEnvironmentVariable("RUN_OPTIONS", "Process")
 $outFile = [System.Environment]::GetEnvironmentVariable("OUT_FILE", "Process")
 $backupDir = [System.Environment]::GetEnvironmentVariable("BACKUP_DIR", "Process")
 
-$timeThreshold = (Get-Date).AddMinutes(-5)
+$timeThreshold = (Get-Date).AddMinutes(-$targetTimeMin)
 $fetchTargetFiles = Get-ChildItem -Path "$($imageFetchDir)\*" -File -Include *.png, *.jpg | 
     Where-Object { $_.CreationTime -gt $timeThreshold }
 
@@ -15,7 +16,7 @@ foreach ($file in $fetchTargetFiles) {
 }
 
 # both images in the current directory already and fetched ones
-$files = Get-ChildItem -Path "$($currentDir)\*" -File -Include *.png, *.jpg
+$files = Get-ChildItem -Path "$($currentDir)\*" -File -Include *.png, *.jpg | Sort-Object LastWriteTime
 $filenames = $files | ForEach-Object { $_.Name }
 $filenames | Write-Output
 
