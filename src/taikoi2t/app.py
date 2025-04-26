@@ -1,6 +1,5 @@
 import csv
 import sys
-from itertools import chain
 from typing import List, Tuple
 
 import cv2
@@ -28,7 +27,6 @@ from taikoi2t.ocr import Character, join_chars
 from taikoi2t.student import (
     StudentDictionary,
     normalize_student_name,
-    split_team,
 )
 
 
@@ -92,25 +90,18 @@ def run() -> None:
                 print(empty_tsv_line(args))
             continue
 
-        # matching student's names by Levenshtein distance
+        # matching student's names with the dictionary
         matched_student_names: List[str] = [
             student_dictionary.match(detected) for detected in detected_student_names
         ]
 
-        (player_st, player_sp) = split_team(matched_student_names[0:6])
-        (opponent_st, opponent_sp) = split_team(matched_student_names[6:12])
-
-        player_team = student_dictionary.apply_alias(
-            chain(player_st, student_dictionary.sort_specials(player_sp))
-        )
-        opponent_team = student_dictionary.apply_alias(
-            chain(opponent_st, student_dictionary.sort_specials(opponent_sp))
-        )
+        player_team = student_dictionary.arrange_team(matched_student_names[0:6])
+        opponent_team = student_dictionary.arrange_team(matched_student_names[6:12])
 
         # passes colored source image because checking win or lose uses mean saturation of the area
         player_wins = check_player_wins(source, result_bounding)
 
-        opponent = (
+        opponent: str = (
             detect_opponent(reader, grayscale, result_bounding) if args.opponent else ""
         )
 
