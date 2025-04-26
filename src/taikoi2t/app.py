@@ -38,6 +38,9 @@ def run() -> None:
         sys.exit(1)
     student_dictionary = StudentDictionary(student_alias_pair)
 
+    if args.verbose >= VERBOSE_PRINT:
+        print(student_dictionary.allow_char_list)
+
     reader = easyocr.Reader(["ja", "en"], verbose=args.verbose >= VERBOSE_PRINT)
 
     for path in args.files:
@@ -77,7 +80,11 @@ def run() -> None:
             )
 
         detected_student_names = detect_student_names(
-            reader, grayscale, result_bounding, student_dictionary.allow_char_list
+            reader,
+            grayscale,
+            result_bounding,
+            student_dictionary.allow_char_list,
+            args.verbose,
         )
 
         # TODO: check 5 or less team
@@ -90,7 +97,8 @@ def run() -> None:
 
         # matching student's names with the dictionary
         matched_student_names: List[str] = [
-            student_dictionary.match(detected) for detected in detected_student_names
+            student_dictionary.match(detected, args.verbose)
+            for detected in detected_student_names
         ]
 
         player_team = student_dictionary.arrange_team(matched_student_names[0:6])
@@ -157,6 +165,7 @@ def detect_student_names(
     grayscale: Image,
     result_bounding: Bounding,
     char_allow_list: str,
+    verbose: int = 0,
 ) -> List[str]:
     students_bounding = __get_students_bounding(result_bounding)
     student_name_images = __preprocess_students(grayscale, students_bounding)
@@ -164,8 +173,17 @@ def detect_student_names(
     buffer: List[str] = list()
     for image in student_name_images:
         chars: List[Character] = reader.readtext(  # type: ignore
-            image, paragraph=True, allowlist=char_allow_list
+            image, allowlist=char_allow_list, mag_ratio=2
         )  # type: ignore
+
+        if verbose >= VERBOSE_PRINT:
+            print([char[1] for char in chars])
+        if verbose >= VERBOSE_IMAGE:
+            for char in chars:
+                top_left, _, bottom_right, _ = char[0]
+                cv2.rectangle(image, top_left, bottom_right, (0, 0, 0))
+            show_image(image)
+
         name = normalize_student_name(join_chars(chars))
         buffer.append(name)
     return buffer

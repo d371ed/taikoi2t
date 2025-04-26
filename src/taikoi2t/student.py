@@ -4,6 +4,8 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import rapidfuzz
 from rapidfuzz import process
 
+from taikoi2t.args import VERBOSE_PRINT
+
 type Strikers = Tuple[str, str, str, str]
 type Specials = Tuple[str, str]
 
@@ -19,7 +21,7 @@ class StudentDictionary:
         self.allow_char_list: str = "".join(set("".join(self.ordered_names))) + "()"
         self.output_mapping: Dict[str, str] = dict(normalized)
 
-    def match(self, detected_text: str) -> str:
+    def match(self, detected_text: str, verbose: int = 0) -> str:
         if detected_text == "":
             return ""
 
@@ -28,16 +30,27 @@ class StudentDictionary:
             self.ordered_names,
             scorer=rapidfuzz.distance.Levenshtein.normalized_similarity,
         )
+        if verbose >= VERBOSE_PRINT:
+            print(
+                f"(normal) input: {detected_text}, matched: {normal_matched}, score: {normal_score}"
+            )
         if normal_score > 0.95:
             return normal_matched  # exact matched
 
         # taking care of missing diacritics in OCR
         # re-matching without diacritics
-        _, no_diacritics_score, no_diacritics_index = process.extractOne(
-            remove_diacritics(detected_text),
-            self.no_diacritics_names,
-            scorer=rapidfuzz.distance.Levenshtein.normalized_similarity,
+        no_diacritics_text = remove_diacritics(detected_text)
+        no_diacritics_matched, no_diacritics_score, no_diacritics_index = (
+            process.extractOne(
+                no_diacritics_text,
+                self.no_diacritics_names,
+                scorer=rapidfuzz.distance.Levenshtein.normalized_similarity,
+            )
         )
+        if verbose >= VERBOSE_PRINT:
+            print(
+                f"(no diacritics) input: {no_diacritics_text}, matched: {no_diacritics_matched}, score: {no_diacritics_score}"
+            )
         return (
             normal_matched
             if normal_score > no_diacritics_score
