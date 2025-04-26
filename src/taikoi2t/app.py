@@ -4,16 +4,8 @@ from typing import List, Tuple
 
 import cv2
 import easyocr  # type: ignore
-from cv2 import (
-    approxPolyDP,  # type: ignore
-    boundingRect,  # type: ignore
-    cvtColor,
-    findContours,
-    imread,
-    threshold,
-)
 
-from taikoi2t.args import VERBOSE_ERROR, VERBOSE_PRINT, Args, parse_args
+from taikoi2t.args import VERBOSE_ERROR, VERBOSE_IMAGE, VERBOSE_PRINT, Args, parse_args
 from taikoi2t.bounding import size as bounding_size
 from taikoi2t.image import (
     Bounding,
@@ -21,6 +13,7 @@ from taikoi2t.image import (
     cutout_image,
     level_contrast,
     resize_to,
+    show_image,
     skew,
 )
 from taikoi2t.ocr import Character, join_chars
@@ -59,7 +52,7 @@ def run() -> None:
             print(f"=== {path} ===")
 
         # imread returns None when error occurred
-        source: Image | None = imread(path.as_posix())
+        source: Image | None = cv2.imread(path.as_posix())
         if source is None:  # type: ignore
             if args.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path} cannot read as an image", file=sys.stderr)
@@ -68,15 +61,20 @@ def run() -> None:
             continue
 
         # for OCR
-        grayscale: Image = cvtColor(source, cv2.COLOR_BGR2GRAY)
+        grayscale: Image = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
 
-        result_bounding = find_result_bounding(grayscale)
+        result_bounding = find_result_bounding(grayscale, args.verbose)
         if result_bounding is None:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Cannot detect any result-box", file=sys.stderr)
             else:
                 print(empty_tsv_line(args))
             continue
+        if args.verbose >= VERBOSE_IMAGE:
+            (left, top, right, bottom) = result_bounding
+            show_image(
+                cv2.rectangle(source.copy(), (left, top), (right, bottom), (0, 255, 0))
+            )
 
         detected_student_names = detect_student_names(
             reader, grayscale, result_bounding, student_dictionary.allow_char_list
@@ -117,24 +115,41 @@ def run() -> None:
             print("\t".join(row))
 
 
-def find_result_bounding(grayscale: Image) -> Bounding | None:
-    RESULT_RATIO: float = 0.43
-    RATIO_EPS: float = 0.05
+def find_result_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
+    RESULT_ASPECT_RATIO: float = 2.33
+    ASPECT_RATIO_EPS: float = 0.05
+    APPROX_PRECISION: float = 0.03
 
     source_width: int = grayscale.shape[1]
 
-    binary: Image = threshold(grayscale, 0, 255, cv2.THRESH_OTSU)[1]
-    contours, _ = findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    binary: Image = cv2.threshold(grayscale, 0, 255, cv2.THRESH_OTSU)[1]
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+    preview: Image | None = None
+    if verbose >= VERBOSE_IMAGE:
+        preview = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
+
+    result: Bounding | None = None
     for contour in contours:
-        rect: List[int] = boundingRect(approxPolyDP(contour, 3, True))
-        if len(rect) < 4:
-            continue
+        epsilon: float = APPROX_PRECISION * cv2.arcLength(contour, True)  # type: ignore
+        approx = cv2.approxPolyDP(contour, epsilon, True)  # type: ignore
+        rect: List[int] = cv2.boundingRect(approx)  # type: ignore
 
         [left, top, width, height] = rect
-        ratio: float = height / width
-        if width > source_width / 2 and abs(ratio - RESULT_RATIO) < RATIO_EPS:
-            return (left, top, left + width, top + height)
+        if preview is not None:
+            cv2.drawContours(preview, [approx], -1, (0, 0, 255))
+
+        aspect_ratio: float = width / height
+        if (
+            width > source_width / 2
+            and abs(aspect_ratio - RESULT_ASPECT_RATIO) < ASPECT_RATIO_EPS
+        ):
+            result = (left, top, left + width, top + height)
+
+    if preview is not None:
+        show_image(preview)
+
+    return result
 
 
 def detect_student_names(
@@ -202,7 +217,9 @@ def check_player_wins(source: Image, result_bounding: Bounding) -> bool:
     )
     win_or_lose_image = cutout_image(source, bounding)
 
-    mean_saturation: int = cv2.mean(cvtColor(win_or_lose_image, cv2.COLOR_BGR2HSV))[1]
+    mean_saturation: int = cv2.mean(cv2.cvtColor(win_or_lose_image, cv2.COLOR_BGR2HSV))[
+        1
+    ]
     # 'Win' has more vivid color than 'Lose'
     return mean_saturation > 50
 
