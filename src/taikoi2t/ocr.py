@@ -1,10 +1,10 @@
-from typing import Iterable
+from typing import Iterable, List, Tuple
 
 from cv2 import rectangle
 
 from taikoi2t.image import Image, show_image
 
-type Character = tuple[list[tuple[int, int]], str, float]
+type Character = Tuple[List[Tuple[int, int]], str, float]
 
 
 def join_chars(chars: Iterable[Character]) -> str:
@@ -12,7 +12,7 @@ def join_chars(chars: Iterable[Character]) -> str:
 
 
 # for debug
-def show_detection_result(image: Image, chars: list[Character]) -> None:
+def show_detection_result(image: Image, chars: List[Character]) -> None:
     title: str = ""
     for char in chars:
         rectangle(image, char[0][0], char[0][2], 0, 1)
