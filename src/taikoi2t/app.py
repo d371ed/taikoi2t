@@ -54,7 +54,7 @@ def run() -> None:
             if args.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path} is not found", file=sys.stderr)
             else:
-                print(empty_csv_line(args))
+                print(empty_tsv_line(args))
             continue
 
         if args.verbose >= VERBOSE_PRINT:
@@ -66,7 +66,7 @@ def run() -> None:
             if args.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path} cannot read as an image", file=sys.stderr)
             else:
-                print(empty_csv_line(args))
+                print(empty_tsv_line(args))
             continue
 
         # for OCR
@@ -77,7 +77,7 @@ def run() -> None:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Cannot detect any result-box", file=sys.stderr)
             else:
-                print(empty_csv_line(args))
+                print(empty_tsv_line(args))
             continue
 
         detected_student_names = detect_student_names(
@@ -89,7 +89,7 @@ def run() -> None:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Student's names detection error", file=sys.stderr)
             else:
-                print(empty_csv_line(args))
+                print(empty_tsv_line(args))
             continue
 
         # matching student's names by Levenshtein distance
@@ -234,5 +234,5 @@ def detect_opponent(
     return join_chars(detected_chars)
 
 
-def empty_csv_line(settings: type[Args]) -> str:
-    return ",".join([""] * (14 if settings.opponent else 13))
+def empty_tsv_line(settings: type[Args]) -> str:
+    return "\t".join(['""'] * (14 if settings.opponent else 13))
