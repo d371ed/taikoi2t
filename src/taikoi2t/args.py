@@ -38,13 +38,16 @@ def parse_args() -> type[Args]:
     args = arg_parser.parse_args(args=None, namespace=Args)
 
     if not args.dictionary.exists():
-        print(f"{args.dictionary.as_posix()} is not found", file=sys.stderr)
-        sys.exit(1)
-
-    if args.dictionary.suffix != ".csv":
         print(
-            f"{args.dictionary.as_posix()} has invalid suffix as CSV", file=sys.stderr
+            f"FATAL: dictionary file {args.dictionary.name} is not found",
+            file=sys.stderr,
         )
         sys.exit(1)
+
+    if args.dictionary.suffix != ".csv" and args.verbose >= VERBOSE_ERROR:
+        print(
+            f"WARNING: {args.dictionary.as_posix()} has invalid suffix as CSV",
+            file=sys.stderr,
+        )
 
     return args

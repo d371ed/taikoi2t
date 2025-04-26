@@ -14,7 +14,7 @@ from cv2 import (
     threshold,
 )
 
-from taikoi2t.args import VERBOSE_ERROR, VERBOSE_PRINT, parse_args
+from taikoi2t.args import VERBOSE_ERROR, VERBOSE_PRINT, Args, parse_args
 from taikoi2t.bounding import size as bounding_size
 from taikoi2t.image import (
     Bounding,
@@ -39,6 +39,12 @@ def run() -> None:
         student_alias_pair: List[Tuple[str, str]] = [
             (row[0], row[1]) for row in csv.reader(students_file)
         ]
+    if len(student_alias_pair) <= 0:
+        print(
+            f"FATAL: {args.dictionary.name} is invalid as student's dictionary",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     student_dictionary = StudentDictionary(student_alias_pair)
 
     reader = easyocr.Reader(["ja", "en"], verbose=args.verbose >= VERBOSE_PRINT)
@@ -46,14 +52,22 @@ def run() -> None:
     for path in args.files:
         if not path.exists():
             if args.verbose >= VERBOSE_ERROR:
-                print(f"ERROR: {path} not found", sys.stderr)
+                print(f"ERROR: {path} is not found", file=sys.stderr)
             else:
-                print(empty_csv_line(args.opponent))
+                print(empty_csv_line(args))
             continue
 
-        source: Image = imread(path.as_posix())  # TODO: error handling
         if args.verbose >= VERBOSE_PRINT:
             print(f"=== {path} ===")
+
+        # imread returns None when error occurred
+        source: Image | None = imread(path.as_posix())
+        if source is None:  # type: ignore
+            if args.verbose >= VERBOSE_ERROR:
+                print(f"ERROR: {path} cannot read as an image", file=sys.stderr)
+            else:
+                print(empty_csv_line(args))
+            continue
 
         # for OCR
         grayscale: Image = cvtColor(source, cv2.COLOR_BGR2GRAY)
@@ -61,9 +75,9 @@ def run() -> None:
         result_bounding = find_result_bounding(grayscale)
         if result_bounding is None:
             if args.verbose >= VERBOSE_ERROR:
-                print("ERROR: Cannot detect any result-box", sys.stderr)
+                print("ERROR: Cannot detect any result-box", file=sys.stderr)
             else:
-                print(empty_csv_line(args.opponent))
+                print(empty_csv_line(args))
             continue
 
         detected_student_names = detect_student_names(
@@ -73,9 +87,9 @@ def run() -> None:
         # TODO: check 5 or less team
         if len(detected_student_names) < 12:
             if args.verbose >= VERBOSE_ERROR:
-                print("ERROR: Student's names detection error", sys.stderr)
+                print("ERROR: Student's names detection error", file=sys.stderr)
             else:
-                print(empty_csv_line(args.opponent))
+                print(empty_csv_line(args))
             continue
 
         # matching student's names by Levenshtein distance
@@ -220,5 +234,5 @@ def detect_opponent(
     return join_chars(detected_chars)
 
 
-def empty_csv_line(opponent: bool) -> str:
-    return ",".join([""] * (14 if opponent else 13))
+def empty_csv_line(settings: type[Args]) -> str:
+    return ",".join([""] * (14 if settings.opponent else 13))
