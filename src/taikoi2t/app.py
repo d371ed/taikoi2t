@@ -14,7 +14,7 @@ from cv2 import (
     threshold,
 )
 
-from taikoi2t.args import parse_args
+from taikoi2t.args import VERBOSE_ERROR, VERBOSE_PRINT, parse_args
 from taikoi2t.bounding import size as bounding_size
 from taikoi2t.image import (
     Bounding,
@@ -39,21 +39,20 @@ def run() -> None:
         student_alias_pair: List[Tuple[str, str]] = [
             (row[0], row[1]) for row in csv.reader(students_file)
         ]
-
     student_dictionary = StudentDictionary(student_alias_pair)
 
-    reader = easyocr.Reader(["ja", "en"], verbose=args.verbose)
+    reader = easyocr.Reader(["ja", "en"], verbose=args.verbose >= VERBOSE_PRINT)
 
     for path in args.files:
         if not path.exists():
-            if args.verbose:
+            if args.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path} not found", sys.stderr)
             else:
                 print(empty_csv_line(args.opponent))
             continue
 
         source: Image = imread(path.as_posix())  # TODO: error handling
-        if args.verbose:
+        if args.verbose >= VERBOSE_PRINT:
             print(f"=== {path} ===")
 
         # for OCR
@@ -61,7 +60,7 @@ def run() -> None:
 
         result_bounding = find_result_bounding(grayscale)
         if result_bounding is None:
-            if args.verbose:
+            if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Cannot detect any result-box", sys.stderr)
             else:
                 print(empty_csv_line(args.opponent))
@@ -73,7 +72,7 @@ def run() -> None:
 
         # TODO: check 5 or less team
         if len(detected_student_names) < 12:
-            if args.verbose:
+            if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Student's names detection error", sys.stderr)
             else:
                 print(empty_csv_line(args.opponent))
@@ -107,7 +106,7 @@ def run() -> None:
             + ([opponent] if args.opponent else [])
             + opponent_team
         )
-        if args.verbose:
+        if args.verbose >= VERBOSE_PRINT:
             print(row)
         else:
             print("\t".join(row))

@@ -4,12 +4,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+VERBOSE_SILENT = 0
+VERBOSE_ERROR = 1
+VERBOSE_PRINT = 2
+VERBOSE_IMAGE = 3
+
 
 @dataclass
 class Args:
     dictionary: Path
     opponent: bool
-    verbose: bool
+    verbose: int
     files: Sequence[Path]
 
 
@@ -22,7 +27,11 @@ def parse_args() -> type[Args]:
         "--opponent", action="store_true", help="include the name of opponent"
     )
     arg_parser.add_argument(
-        "--verbose", action="store_true", help="print messages for debug"
+        "--verbose",
+        "-v",
+        action="count",
+        default=VERBOSE_SILENT,
+        help="print messages and show images for debug (0: silent, 1: error, 2: print, 3: image)",
     )
     arg_parser.add_argument("files", type=Path, nargs="+")
 
