@@ -1,7 +1,7 @@
 import csv
 import sys
 from itertools import chain
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import cv2
 import easyocr  # type: ignore
@@ -13,7 +13,6 @@ from cv2 import (
     imread,
     threshold,
 )
-from rapidfuzz import process
 
 from taikoi2t.args import parse_args
 from taikoi2t.bounding import size as bounding_size
@@ -27,9 +26,8 @@ from taikoi2t.image import (
 )
 from taikoi2t.ocr import Character, join_chars
 from taikoi2t.student import (
-    apply_alias,
+    StudentDictionary,
     normalize_student_name,
-    sort_specials,
     split_team,
 )
 
@@ -38,16 +36,11 @@ def run() -> None:
     args = parse_args()
 
     with args.dictionary.open(mode="r", encoding="utf-8") as students_file:
-        student_dictionary: List[Tuple[str, str]] = [
-            (normalize_student_name(row[0]), row[1])
-            for row in csv.reader(students_file)
+        student_alias_pair: List[Tuple[str, str]] = [
+            (row[0], row[1]) for row in csv.reader(students_file)
         ]
 
-    char_allow_list: str = (
-        "".join(set("".join(s[0] for s in student_dictionary))) + "()"
-    )
-    ordered_students: List[str] = [pair[0] for pair in student_dictionary]
-    student_mapping: Dict[str, str] = dict(student_dictionary)
+    student_dictionary = StudentDictionary(student_alias_pair)
 
     reader = easyocr.Reader(["ja", "en"], verbose=args.verbose)
 
@@ -75,7 +68,7 @@ def run() -> None:
             continue
 
         detected_student_names = detect_student_names(
-            reader, grayscale, result_bounding, char_allow_list
+            reader, grayscale, result_bounding, student_dictionary.allow_char_list
         )
 
         # TODO: check 5 or less team
@@ -88,20 +81,17 @@ def run() -> None:
 
         # matching student's names by Levenshtein distance
         matched_student_names: List[str] = [
-            process.extractOne(detected, ordered_students)[0] if detected != "" else ""
-            for detected in detected_student_names
+            student_dictionary.match(detected) for detected in detected_student_names
         ]
 
         (player_st, player_sp) = split_team(matched_student_names[0:6])
         (opponent_st, opponent_sp) = split_team(matched_student_names[6:12])
 
-        player_team = apply_alias(
-            chain(player_st, sort_specials(player_sp, ordered_students)),
-            student_mapping,
+        player_team = student_dictionary.apply_alias(
+            chain(player_st, student_dictionary.sort_specials(player_sp))
         )
-        opponent_team = apply_alias(
-            chain(opponent_st, sort_specials(opponent_sp, ordered_students)),
-            student_mapping,
+        opponent_team = student_dictionary.apply_alias(
+            chain(opponent_st, student_dictionary.sort_specials(opponent_sp))
         )
 
         # passes colored source image because checking win or lose uses mean saturation of the area
