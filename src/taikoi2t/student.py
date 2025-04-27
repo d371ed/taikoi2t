@@ -4,7 +4,7 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import rapidfuzz
 from rapidfuzz import process
 
-from taikoi2t.args import VERBOSE_PRINT
+from taikoi2t.args import VERBOSE_PRINT, VERBOSE_SILENT
 
 type Strikers = Tuple[str, str, str, str]
 type Specials = Tuple[str, str]
@@ -21,7 +21,7 @@ class StudentDictionary:
         self.allow_char_list: str = "".join(set("".join(self.ordered_names))) + "()"
         self.output_mapping: Dict[str, str] = dict(normalized)
 
-    def match(self, detected_text: str, verbose: int = 0) -> str:
+    def match(self, detected_text: str, verbose: int = VERBOSE_SILENT) -> str:
         if detected_text == "":
             return ""
 
