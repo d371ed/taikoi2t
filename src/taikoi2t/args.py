@@ -18,8 +18,12 @@ class Args:
     files: Sequence[Path]
 
 
-def parse_args() -> type[Args]:
-    arg_parser = argparse.ArgumentParser()
+def parse_args(args: Sequence[str] | None = None) -> type[Args]:
+    if args is not None and len(args) == 0:
+        print("FATAL: args is empty", file=sys.stderr)
+        sys.exit(1)
+    arg_parser = argparse.ArgumentParser(None if args is None else args[0])
+
     arg_parser.add_argument(
         "-d", "--dictionary", type=Path, required=True, help="student dictionary (CSV)"
     )
@@ -35,8 +39,12 @@ def parse_args() -> type[Args]:
     )
     arg_parser.add_argument("files", type=Path, nargs="+")
 
-    args = arg_parser.parse_args(args=None, namespace=Args)
+    return arg_parser.parse_args(
+        args=None if args is None else args[1:], namespace=Args
+    )
 
+
+def validate_args(args: type[Args]) -> bool:
     if not args.dictionary.exists():
         print(
             f"FATAL: dictionary file {args.dictionary.name} is not found",
@@ -50,4 +58,4 @@ def parse_args() -> type[Args]:
             file=sys.stderr,
         )
 
-    return args
+    return True  # currently always returns True

@@ -5,7 +5,14 @@ from typing import List, Tuple
 import cv2
 import easyocr  # type: ignore
 
-from taikoi2t.args import VERBOSE_ERROR, VERBOSE_IMAGE, VERBOSE_PRINT, Args, parse_args
+from taikoi2t.args import (
+    VERBOSE_ERROR,
+    VERBOSE_IMAGE,
+    VERBOSE_PRINT,
+    Args,
+    parse_args,
+    validate_args,
+)
 from taikoi2t.bounding import size as bounding_size
 from taikoi2t.image import (
     Bounding,
@@ -25,6 +32,7 @@ from taikoi2t.student import (
 
 def run() -> None:
     args = parse_args()
+    validate_args(args)
 
     with args.dictionary.open(mode="r", encoding="utf-8") as students_file:
         student_alias_pair: List[Tuple[str, str]] = [
