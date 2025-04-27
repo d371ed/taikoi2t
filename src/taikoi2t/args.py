@@ -18,7 +18,7 @@ class Args:
     files: Sequence[Path]
 
 
-def parse_args(args: Sequence[str] | None = None) -> type[Args]:
+def parse_args(args: Sequence[str] | None = None) -> Args:
     if args is not None and len(args) == 0:
         print("FATAL: args is empty", file=sys.stderr)
         sys.exit(1)
@@ -40,11 +40,12 @@ def parse_args(args: Sequence[str] | None = None) -> type[Args]:
     arg_parser.add_argument("files", type=Path, nargs="+")
 
     return arg_parser.parse_args(
-        args=None if args is None else args[1:], namespace=Args
+        args=None if args is None else args[1:],
+        namespace=Args(Path(), False, 0, []),
     )
 
 
-def validate_args(args: type[Args]) -> bool:
+def validate_args(args: Args) -> bool:
     if not args.dictionary.exists():
         print(
             f"FATAL: dictionary file {args.dictionary.name} is not found",

@@ -268,5 +268,5 @@ def detect_opponent(
     return join_chars(detected_chars)
 
 
-def empty_tsv_line(settings: type[Args]) -> str:
+def empty_tsv_line(settings: Args) -> str:
     return "\t".join(['""'] * (14 if settings.opponent else 13))
