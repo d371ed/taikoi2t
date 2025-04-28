@@ -1,5 +1,6 @@
 import csv
 import sys
+from pathlib import Path
 from typing import List, Tuple
 
 import cv2
@@ -34,16 +35,14 @@ def run() -> None:
     args = parse_args()
     validate_args(args)
 
-    with args.dictionary.open(mode="r", encoding="utf-8") as students_file:
-        student_alias_pair: List[Tuple[str, str]] = [
-            (row[0], row[1]) for row in csv.reader(students_file)
-        ]
-    if len(student_alias_pair) <= 0:
+    student_alias_pair = read_student_alias_pair_file(args.dictionary)
+    if student_alias_pair is None:
         print(
-            f"FATAL: {args.dictionary.name} is invalid as student's dictionary",
+            f"FATAL: {args.dictionary.as_posix()} is invalid as student's dictionary",
             file=sys.stderr,
         )
         sys.exit(1)
+
     student_dictionary = StudentDictionary(student_alias_pair)
 
     if args.verbose >= VERBOSE_PRINT:
@@ -54,19 +53,21 @@ def run() -> None:
     for path in args.files:
         if not path.exists():
             if args.verbose >= VERBOSE_ERROR:
-                print(f"ERROR: {path} is not found", file=sys.stderr)
+                print(f"ERROR: {path.as_posix()} is not found", file=sys.stderr)
             else:
                 print(empty_tsv_line(args))
             continue
 
         if args.verbose >= VERBOSE_PRINT:
-            print(f"=== {path} ===")
+            print(f"=== {path.as_posix()} ===")
 
         # imread returns None when error occurred
         source: Image | None = cv2.imread(path.as_posix())
         if source is None:  # type: ignore
             if args.verbose >= VERBOSE_ERROR:
-                print(f"ERROR: {path} cannot read as an image", file=sys.stderr)
+                print(
+                    f"ERROR: {path.as_posix()} cannot read as an image", file=sys.stderr
+                )
             else:
                 print(empty_tsv_line(args))
             continue
@@ -129,6 +130,21 @@ def run() -> None:
             print(row)
         else:
             print("\t".join(row))
+
+
+def read_student_alias_pair_file(path: Path) -> List[Tuple[str, str]] | None:
+    ret: List[Tuple[str, str]]
+    with path.open(mode="r", encoding="utf-8") as students_file:
+        try:
+            ret = [
+                (row[0], row[1] if len(row) >= 2 else "")
+                for row in csv.reader(students_file)
+            ]
+        except IndexError:
+            return None
+    if len(ret) == 0:
+        return None
+    return ret
 
 
 def find_result_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
