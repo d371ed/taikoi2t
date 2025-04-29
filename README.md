@@ -20,8 +20,10 @@ FALSE    イオリ  ホシノ  シロコ＊        シュン  水シロコ      
 - 勝敗の取得
 - 対戦相手名の取得 (`--opponent` オプション)
 
-**※注意** [PyTorch](https://pytorch.org/) のインストールにより 4.3GB 以上のストレージ容量が必要になるはずです. CPU 版に変更することで省容量化は可能ですが, 実行速度が大きく低下します.
-また GPU が CUDA 12.4 をサポートしていない場合もおそらく実行速度が低下する (あるいは実行自体が不能) と予想されます.
+**※注意** [PyTorch](https://pytorch.org/) のインストールにより, これだけで 4.7GB 以上のストレージ容量が必要になるはずです. CPU 版に変更することで省容量化は可能ですが, 実行速度が大きく低下します.
+また GPU とドライバが CUDA 12.6 をサポートしていない場合もおそらく実行速度が低下する (あるいは実行自体が不能) と予想されます.
+
+これについては [PyTorch バージョンについて](#pytorch-バージョンについて) をご覧ください.
 
 **※注意** 該当ゲーム画面の UI が変更された場合抽出が不能になります. 2025年4月次点の UI に基づいて設計されています.
 
@@ -185,6 +187,29 @@ Image. Print の内容に加え `cv2.imshow` で画像解析の途中経過を�
 バッチファイル (.bat) をダブルクリックで起動することを想定しています.
 
 
+## PyTorch バージョンについて
+
+OCR の動作に [PyTorch](https://pytorch.org/) を利用しています.
+
+デフォルトでは CUDA 12.6 対応の PyTorch をインストールしますが, お使いの GPU に適合しない場合はインストール前に `pyproject.toml` を書き換えることで構成をカスタマイズする必要があります.
+
+CUDA 11.8 へ変更する例:
+
+```toml:pyproject.toml
+[[tool.poetry.source]]
+name = "torch_cu118" # 下と同一になれば名前は変更しなくても良いです
+url = "https://download.pytorch.org/whl/cu118" # 該当バージョンの URL へ変更
+priority = "explicit"
+
+[tool.poetry.dependencies]
+torch = {source = "torch_cu118"}
+torchvision = {source = "torch_cu118"}
+```
+
+グラフィックボードを搭載していない PC など, CPU で実行する場合は上記コードをすべて削除してください.
+これにより大幅にストレージ容量を節約することが可能です. (ただし実行速度は CUDA 版よりかなり低下します.)
+
+
 ## できないこと
 
 - 各生徒のダメージ数値の抽出
@@ -206,7 +231,7 @@ Image. Print の内容に加え `cv2.imshow` で画像解析の途中経過を�
 - Core i5-9600K
 - RAM 16GB
 - GeForce GTX 1060 6GB
-- GeForce Driver 32.0.15.6094
+- NVIDIA Driver Version: 560.94, CUDA Version: 12.6
 
 
 ## 免責等

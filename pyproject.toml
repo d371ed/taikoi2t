@@ -11,8 +11,8 @@ dependencies = [
     "easyocr (>=1.7.2,<2.0.0)",
     "opencv-python (>=4.11.0.86,<5.0.0.0)",
     "rapidfuzz (>=3.13.0,<4.0.0)",
-    "torch @ https://download.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp313-cp313-win_amd64.whl",
-    "torchvision @ https://download.pytorch.org/whl/cu124/torchvision-0.21.0%2Bcu124-cp313-cp313-win_amd64.whl"
+    "torch (>=2.7.0,<3.0.0)",
+    "torchvision (>=0.22.0,<0.23.0)",
 ]
 [project.scripts]
 taikoi2t = "taikoi2t.app:run"
@@ -23,6 +23,15 @@ packages = [{include = "taikoi2t", from = "src"}]
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 opencv-stubs = "^0.0.11"
+
+[[tool.poetry.source]]
+name = "torch_cu126"
+url = "https://download.pytorch.org/whl/cu126"
+priority = "explicit"
+
+[tool.poetry.dependencies]
+torch = {source = "torch_cu126"}
+torchvision = {source = "torch_cu126"}
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
