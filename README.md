@@ -3,7 +3,7 @@
 ゲーム「ブルーアーカイブ」 (日本語版) 戦術対抗戦リザルトのスクリーンショットから, 編成データを画像認識で抽出します.
 
 ```sh
-> poetry run main -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\Screenshot_2025.04.01_01.00.00.000.png
+> poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\Screenshot_2025.04.01_01.00.00.000.png
 TRUE    ホシノ  バネル  マリナ  アジュリ        水シロコ        ヒビキ  水ハナコ        マリナ  シロコ＊        ホシノ  水シロコ        ヒビキ
 FALSE    イオリ  ホシノ  シロコ＊        シュン  水シロコ        佐天涙子        ホシノ  シロコ＊        マリナ  レイサ  水シロコ        ヒビキ
 ```
@@ -41,29 +41,29 @@ CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり�
 ## 使い方
 
 ```
-usage: main [-h] -d DICTIONARY [--opponent] [--verbose] files [files ...]
+usage: taikoi2t [-h] -d DICTIONARY [--opponent] [-v] files [files ...]
 
 positional arguments:
-  files
+  files                 target images
 
 options:
   -h, --help            show this help message and exit
   -d, --dictionary DICTIONARY
                         student dictionary (CSV)
   --opponent            include the name of opponent
-  --verbose, -v         print messages and show images for debug (0: silent, 1: error, 2: print, 3: image)
+  -v, --verbose         print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)
 ```
 
-### 実行例
+### コマンド例
 
 ```sh
-> poetry run main -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\videoframe_100000.jpg
+> poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\videoframe_100000.jpg
 ```
 
 以下のようにすると対戦相手名を出力に含むようになります.
 
 ```sh
-> poetry run main -d .\students.csv --opponent .\Screenshot_2025.04.01_00.00.00.000.png
+> poetry run taikoi2t -d .\students.csv --opponent .\Screenshot_2025.04.01_00.00.00.000.png
 ```
 
 ### `-d, --dictionary`

@@ -31,13 +31,13 @@ def parse_args(args: Sequence[str]) -> Args:
         "--opponent", action="store_true", help="include the name of opponent"
     )
     arg_parser.add_argument(
-        "--verbose",
         "-v",
+        "--verbose",
         action="count",
         default=VERBOSE_SILENT,
-        help="print messages and show images for debug (0: silent, 1: error, 2: print, 3: image)",
+        help="print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)",
     )
-    arg_parser.add_argument("files", type=Path, nargs="+")
+    arg_parser.add_argument("files", type=Path, nargs="+", help="target images")
 
     return arg_parser.parse_args(args=args[1:], namespace=Args(Path(), False, 0, []))
 
