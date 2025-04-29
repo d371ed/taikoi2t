@@ -54,8 +54,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if not path.exists():
             if args.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path.as_posix()} is not found", file=sys.stderr)
-            else:
-                print(empty_tsv_line(args))
+            print(empty_tsv_line(args))
             continue
 
         if args.verbose >= VERBOSE_PRINT:
@@ -68,8 +67,7 @@ def run(argv: Sequence[str] | None = None) -> None:
                 print(
                     f"ERROR: {path.as_posix()} cannot read as an image", file=sys.stderr
                 )
-            else:
-                print(empty_tsv_line(args))
+            print(empty_tsv_line(args))
             continue
 
         # for OCR
@@ -79,8 +77,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if result_bounding is None:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Cannot detect any result-box", file=sys.stderr)
-            else:
-                print(empty_tsv_line(args))
+            print(empty_tsv_line(args))
             continue
         if args.verbose >= VERBOSE_IMAGE:
             (left, top, right, bottom) = result_bounding
@@ -100,8 +97,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if len(detected_student_names) < 12:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Student's names detection error", file=sys.stderr)
-            else:
-                print(empty_tsv_line(args))
+            print(empty_tsv_line(args))
             continue
 
         # matching student's names with the dictionary
