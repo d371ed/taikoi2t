@@ -20,7 +20,7 @@ $files = Get-ChildItem -Path "$($currentDir)\*" -File -Include *.png, *.jpg | So
 $filenames = $files | ForEach-Object { $_.Name }
 $filenames | Write-Output
 
-$command = "poetry --project $($appDir) run main -d $($dictionaryCsv) $($runOptions) " + ($filenames -join " ")
+$command = "poetry --project $($appDir) run taikoi2t -d $($dictionaryCsv) $($runOptions) " + ($filenames -join " ")
 $result = Invoke-Expression $command
 
 $result | Out-File -FilePath $outFile -Encoding utf8

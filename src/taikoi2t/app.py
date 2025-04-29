@@ -1,7 +1,7 @@
 import csv
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Sequence, Tuple
 
 import cv2
 import easyocr  # type: ignore
@@ -31,8 +31,8 @@ from taikoi2t.student import (
 )
 
 
-def run() -> None:
-    args = parse_args()
+def run(argv: Sequence[str] | None = None) -> None:
+    args = parse_args(argv or sys.argv)
     validate_args(args)
 
     student_alias_pair = read_student_alias_pair_file(args.dictionary)

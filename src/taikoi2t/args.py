@@ -18,11 +18,11 @@ class Args:
     files: Sequence[Path]
 
 
-def parse_args(args: Sequence[str] | None = None) -> Args:
-    if args is not None and len(args) == 0:
+def parse_args(args: Sequence[str]) -> Args:
+    if len(args) == 0:
         print("FATAL: args is empty", file=sys.stderr)
         sys.exit(1)
-    arg_parser = argparse.ArgumentParser(None if args is None else args[0])
+    arg_parser = argparse.ArgumentParser(args[0])
 
     arg_parser.add_argument(
         "-d", "--dictionary", type=Path, required=True, help="student dictionary (CSV)"
@@ -39,10 +39,7 @@ def parse_args(args: Sequence[str] | None = None) -> Args:
     )
     arg_parser.add_argument("files", type=Path, nargs="+")
 
-    return arg_parser.parse_args(
-        args=None if args is None else args[1:],
-        namespace=Args(Path(), False, 0, []),
-    )
+    return arg_parser.parse_args(args=args[1:], namespace=Args(Path(), False, 0, []))
 
 
 def validate_args(args: Args) -> bool:
