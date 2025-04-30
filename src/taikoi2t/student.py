@@ -61,13 +61,20 @@ class StudentDictionary:
 
     def arrange_team(self, team: Sequence[str]) -> List[str]:
         strikers, specials = split_team(team)
-        return self.apply_alias(chain(strikers, self.sort_specials(specials)))
-
-    def apply_alias(self, names: Iterable[str]) -> List[str]:
         return [
-            (name if self.output_mapping[name] == "" else self.output_mapping[name])
-            for name in names
+            self.apply_alias(name)
+            for name in chain(strikers, self.sort_specials(specials))
         ]
+
+    def apply_alias(self, name: str) -> str:
+        if name == "" or name == ERROR_STUDENT:
+            return name
+        else:
+            try:
+                mapped: str = self.output_mapping[name]
+                return mapped or name
+            except KeyError:
+                return ERROR_STUDENT
 
     def sort_specials(self, specials: Specials) -> Specials:
         sp1_index, sp1_name = self.__index_name_pair(specials[0])

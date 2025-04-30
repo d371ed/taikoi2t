@@ -1,5 +1,3 @@
-import pytest
-
 from taikoi2t.student import (
     StudentDictionary,
     normalize_student_name,
@@ -68,28 +66,24 @@ def test_StudentDictionary_arrange_team() -> None:
     )
     assert res1 == ["ホシノ", "バネル", "シロコ＊", "ノノミ", "水シロコ", "水アヤネ"]
 
+    res2 = dic.arrange_team(["ホシノ", "セリカ", "シロコ", "ノノミ", "アヤネ", ""])
+    assert res2 == ["ホシノ", "Error", "Error", "ノノミ", "Error", ""]
+
 
 def test_StudentDictionary_apply_alias() -> None:
     dic = StudentDictionary(
-        [
-            ("シロコ（水着）", "水シロコ"),
-            ("ホシノ", ""),
-            ("ヒビキ", ""),
-            ("佐天涙子", ""),
-        ]
+        [("シロコ（水着）", "水シロコ"), ("ヒビキ", ""), ("佐天涙子", "")]
     )
 
-    assert dic.apply_alias(("シロコ（水着）", "ヒビキ")) == ["水シロコ", "ヒビキ"]
-
-    with pytest.raises(KeyError) as e:
-        dic.apply_alias(("シロコ（水着）", "サツキ"))
-    assert str(e.value) == "'サツキ'"
+    assert dic.apply_alias("シロコ（水着）") == "水シロコ"
+    assert dic.apply_alias("ヒビキ") == "ヒビキ"
+    assert dic.apply_alias("サツキ") == "Error"
+    assert dic.apply_alias("Error") == "Error"
+    assert dic.apply_alias("") == ""
 
 
 def test_StudentDictionary_sort_specials() -> None:
-    dic = StudentDictionary(
-        [("シロコ（水着）", ""), ("ホシノ", ""), ("ヒビキ", ""), ("佐天涙子", "")]
-    )
+    dic = StudentDictionary([("シロコ（水着）", ""), ("ヒビキ", ""), ("佐天涙子", "")])
 
     assert dic.sort_specials(("シロコ（水着）", "ヒビキ")) == (
         "シロコ（水着）",
