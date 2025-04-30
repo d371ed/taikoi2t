@@ -73,14 +73,14 @@ def run(argv: Sequence[str] | None = None) -> None:
         # for OCR
         grayscale: Image = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
 
-        result_bounding = find_result_bounding(grayscale, args.verbose)
-        if result_bounding is None:
+        modal_bounding = find_modal_bounding(grayscale, args.verbose)
+        if modal_bounding is None:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Cannot detect any result-box", file=sys.stderr)
             print(empty_tsv_line(args))
             continue
         if args.verbose >= VERBOSE_IMAGE:
-            (left, top, right, bottom) = result_bounding
+            (left, top, right, bottom) = modal_bounding
             show_image(
                 cv2.rectangle(source.copy(), (left, top), (right, bottom), (0, 255, 0))
             )
@@ -88,7 +88,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         detected_student_names = detect_student_names(
             reader,
             grayscale,
-            result_bounding,
+            modal_bounding,
             student_dictionary.allow_char_list,
             args.verbose,
         )
@@ -110,10 +110,10 @@ def run(argv: Sequence[str] | None = None) -> None:
         opponent_team = student_dictionary.arrange_team(matched_student_names[6:12])
 
         # passes colored source image because checking win or lose uses mean saturation of the area
-        player_wins = check_player_wins(source, result_bounding)
+        player_wins = check_player_wins(source, modal_bounding)
 
         opponent: str = (
-            detect_opponent(reader, grayscale, result_bounding) if args.opponent else ""
+            detect_opponent(reader, grayscale, modal_bounding) if args.opponent else ""
         )
 
         row: List[str] = (
@@ -129,21 +129,21 @@ def run(argv: Sequence[str] | None = None) -> None:
 
 
 def read_student_alias_pair_file(path: Path) -> List[Tuple[str, str]] | None:
-    ret: List[Tuple[str, str]]
+    rows: List[Tuple[str, str]]
     with path.open(mode="r", encoding="utf-8") as students_file:
         try:
-            ret = [
+            rows = [
                 (row[0], row[1] if len(row) >= 2 else "")
                 for row in csv.reader(students_file)
             ]
         except IndexError:
             return None
-    if len(ret) == 0:
+    if len(rows) == 0:
         return None
-    return ret
+    return rows
 
 
-def find_result_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
+def find_modal_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
     RESULT_ASPECT_RATIO: float = 2.33
     ASPECT_RATIO_EPS: float = 0.05
     APPROX_PRECISION: float = 0.03
@@ -183,14 +183,14 @@ def find_result_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
 def detect_student_names(
     reader: easyocr.Reader,
     grayscale: Image,
-    result_bounding: Bounding,
+    modal: Bounding,
     char_allow_list: str,
     verbose: int = 0,
 ) -> List[str]:
-    students_bounding = __get_students_bounding(result_bounding)
+    students_bounding = __get_students_bounding(modal)
     student_name_images = __preprocess_students(grayscale, students_bounding)
 
-    buffer: List[str] = list()
+    results: List[str] = list()
     for image in student_name_images:
         chars: List[Character] = reader.readtext(  # type: ignore
             image, allowlist=char_allow_list, mag_ratio=2
@@ -205,14 +205,14 @@ def detect_student_names(
             show_image(image)
 
         name = normalize_student_name(join_chars(chars))
-        buffer.append(name)
-    return buffer
+        results.append(name)
+    return results
 
 
-def __get_students_bounding(bounding: Bounding) -> Bounding:
+def __get_students_bounding(modal: Bounding) -> Bounding:
     FOOTER_RATIO: float = 0.085
-    (left, _, right, bottom) = bounding
-    (_, height) = bounding_size(bounding)
+    (left, _, right, bottom) = modal
+    (_, height) = bounding_size(modal)
     footer_height = int(FOOTER_RATIO * height)
     footer_top = int(bottom - footer_height)
     return (left, footer_top, right, bottom)
@@ -243,9 +243,9 @@ def __preprocess_students(grayscale: Image, bounding: Bounding) -> List[Image]:
     return results
 
 
-def check_player_wins(source: Image, result_bounding: Bounding) -> bool:
-    (left, top, _, _) = result_bounding
-    (width, height) = bounding_size(result_bounding)
+def check_player_wins(source: Image, modal: Bounding) -> bool:
+    (left, top, _, _) = modal
+    (width, height) = bounding_size(modal)
 
     bounding: Bounding = (
         width // 12 + left,
@@ -262,11 +262,9 @@ def check_player_wins(source: Image, result_bounding: Bounding) -> bool:
     return mean_saturation > 50
 
 
-def detect_opponent(
-    reader: easyocr.Reader, grayscale: Image, result_bounding: Bounding
-) -> str:
-    (left, top, _, _) = result_bounding
-    (width, height) = bounding_size(result_bounding)
+def detect_opponent(reader: easyocr.Reader, grayscale: Image, modal: Bounding) -> str:
+    (left, top, _, _) = modal
+    (width, height) = bounding_size(modal)
 
     bounding: Bounding = (
         width * 5 // 6 + left,

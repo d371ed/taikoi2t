@@ -45,7 +45,7 @@ def parse_args(args: Sequence[str]) -> Args:
 def validate_args(args: Args) -> bool:
     if not args.dictionary.exists():
         print(
-            f"FATAL: dictionary file {args.dictionary.name} is not found",
+            f"FATAL: dictionary file {args.dictionary.as_posix()} is not found",
             file=sys.stderr,
         )
         sys.exit(1)

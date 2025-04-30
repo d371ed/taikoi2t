@@ -35,7 +35,7 @@ def test_StudentDictionary_match() -> None:
     assert dict.match("シロコ") == "シロコ"
     assert dict.match("シロコ（水着）") == "シロコ（水着）"
     assert dict.match("シロコ（水着") == "シロコ（水着）"
-    # assert dict.match("シロコ水者") == "シロコ（水着）"
+    # assert dict.match("シロコ水者") == "シロコ（水着）" # cannot match this correctly
     assert dict.match("シロコ＊テラー") == "シロコ＊テラー"
     assert dict.match("シロコミテラー") == "シロコ＊テラー"
     assert dict.match("ネル（ハニーカール）") == "ネル（バニーガール）"

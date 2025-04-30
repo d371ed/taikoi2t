@@ -1,11 +1,12 @@
 {
   "cSpell.words": [
-    "Amamoriya",
     "easyocr",
     "imread",
     "imshow",
     "opencv",
+    "THRESH_OTSU",
     "pytest",
-    "taikoi"
+    "readtext",
+    "taikoi2t"
   ]
 }

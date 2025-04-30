@@ -69,10 +69,10 @@ class StudentDictionary:
 
     def sort_specials(self, specials: Specials) -> Specials:
         return (
-            (specials[1], specials[0])
+            specials
             if self.ordered_names.index(specials[0])
-            > self.ordered_names.index(specials[1])
-            else (specials[0], specials[1])
+            <= self.ordered_names.index(specials[1])
+            else (specials[1], specials[0])
         )
 
 
