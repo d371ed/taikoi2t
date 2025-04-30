@@ -9,7 +9,7 @@ from taikoi2t.student import (
 
 
 def test_StudentDictionary_match() -> None:
-    dict = StudentDictionary(
+    dic = StudentDictionary(
         [
             ("シロコ（水着）", "水シロコ"),
             ("ホシノ", ""),
@@ -31,19 +31,19 @@ def test_StudentDictionary_match() -> None:
             ("ジュリ", ""),
         ]
     )
-    assert dict.match("ホシノ") == "ホシノ"
-    assert dict.match("シロコ") == "シロコ"
-    assert dict.match("シロコ（水着）") == "シロコ（水着）"
-    assert dict.match("シロコ（水着") == "シロコ（水着）"
-    # assert dict.match("シロコ水者") == "シロコ（水着）" # cannot match this correctly
-    assert dict.match("シロコ＊テラー") == "シロコ＊テラー"
-    assert dict.match("シロコミテラー") == "シロコ＊テラー"
-    assert dict.match("ネル（ハニーカール）") == "ネル（バニーガール）"
-    assert dict.match("ナキサ") == "ナギサ"
+    assert dic.match("ホシノ") == "ホシノ"
+    assert dic.match("シロコ") == "シロコ"
+    assert dic.match("シロコ（水着）") == "シロコ（水着）"
+    assert dic.match("シロコ（水着") == "シロコ（水着）"
+    # assert dic.match("シロコ水者") == "シロコ（水着）" # cannot match this correctly
+    assert dic.match("シロコ＊テラー") == "シロコ＊テラー"
+    assert dic.match("シロコミテラー") == "シロコ＊テラー"
+    assert dic.match("ネル（ハニーカール）") == "ネル（バニーガール）"
+    assert dic.match("ナキサ") == "ナギサ"
 
 
 def test_StudentDictionary_arrange_team() -> None:
-    dict = StudentDictionary(
+    dic = StudentDictionary(
         [
             ("シロコ（水着）", "水シロコ"),
             ("ホシノ", ""),
@@ -56,7 +56,7 @@ def test_StudentDictionary_arrange_team() -> None:
             ("アヤネ（水着）", "水アヤネ"),
         ]
     )
-    res1 = dict.arrange_team(
+    res1 = dic.arrange_team(
         [
             "ホシノ",
             "ネル（バニーガール）",
@@ -70,7 +70,7 @@ def test_StudentDictionary_arrange_team() -> None:
 
 
 def test_StudentDictionary_apply_alias() -> None:
-    dict = StudentDictionary(
+    dic = StudentDictionary(
         [
             ("シロコ（水着）", "水シロコ"),
             ("ホシノ", ""),
@@ -79,30 +79,35 @@ def test_StudentDictionary_apply_alias() -> None:
         ]
     )
 
-    assert dict.apply_alias(("シロコ（水着）", "ヒビキ")) == ["水シロコ", "ヒビキ"]
+    assert dic.apply_alias(("シロコ（水着）", "ヒビキ")) == ["水シロコ", "ヒビキ"]
 
     with pytest.raises(KeyError) as e:
-        dict.apply_alias(("シロコ（水着）", "サツキ"))
+        dic.apply_alias(("シロコ（水着）", "サツキ"))
     assert str(e.value) == "'サツキ'"
 
 
 def test_StudentDictionary_sort_specials() -> None:
-    dict = StudentDictionary(
+    dic = StudentDictionary(
         [("シロコ（水着）", ""), ("ホシノ", ""), ("ヒビキ", ""), ("佐天涙子", "")]
     )
 
-    assert dict.sort_specials(("シロコ（水着）", "ヒビキ")) == (
+    assert dic.sort_specials(("シロコ（水着）", "ヒビキ")) == (
         "シロコ（水着）",
         "ヒビキ",
     )
-    assert dict.sort_specials(("ヒビキ", "シロコ（水着）")) == (
+    assert dic.sort_specials(("ヒビキ", "シロコ（水着）")) == (
         "シロコ（水着）",
         "ヒビキ",
     )
-
-    with pytest.raises(ValueError) as e:
-        dict.sort_specials(("シロコ（水着）", "サツキ"))
-    assert str(e.value) == "'サツキ' is not in list"
+    assert dic.sort_specials(("シロコ（水着）", "サツキ")) == (
+        "シロコ（水着）",
+        "Error",
+    )
+    assert dic.sort_specials(("ウタハ", "ヒビキ")) == ("ヒビキ", "Error")
+    assert dic.sort_specials(("シロコ（水着）", "")) == ("シロコ（水着）", "")
+    assert dic.sort_specials(("", "")) == ("", "")
+    assert dic.sort_specials(("ノドカ（温泉）", "")) == ("Error", "")
+    assert dic.sort_specials(("", "ノドカ（温泉）")) == ("Error", "")
 
 
 def test_split_team() -> None:

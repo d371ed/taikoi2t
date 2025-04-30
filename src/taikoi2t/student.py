@@ -9,6 +9,8 @@ from taikoi2t.args import VERBOSE_PRINT, VERBOSE_SILENT
 type Strikers = Tuple[str, str, str, str]
 type Specials = Tuple[str, str]
 
+ERROR_STUDENT: str = "Error"
+
 
 class StudentDictionary:
     def __init__(self, raw: Iterable[Tuple[str, str]]) -> None:
@@ -68,12 +70,19 @@ class StudentDictionary:
         ]
 
     def sort_specials(self, specials: Specials) -> Specials:
-        return (
-            specials
-            if self.ordered_names.index(specials[0])
-            <= self.ordered_names.index(specials[1])
-            else (specials[1], specials[0])
-        )
+        sp1_index, sp1_name = self.__index_name_pair(specials[0])
+        sp2_index, sp2_name = self.__index_name_pair(specials[1])
+        return (sp1_name, sp2_name) if sp1_index <= sp2_index else (sp2_name, sp1_name)
+
+    def __index_name_pair(self, name: str) -> Tuple[int, str]:
+        if name == "":
+            # more to the right of Error
+            return (len(self.ordered_names) + 1, "")
+        elif name in self.ordered_names:
+            return (self.ordered_names.index(name), name)
+        else:
+            # more to the right of a valid name
+            return (len(self.ordered_names), ERROR_STUDENT)
 
 
 def split_team(students: Sequence[str]) -> Tuple[Strikers, Specials]:

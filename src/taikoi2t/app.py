@@ -26,6 +26,7 @@ from taikoi2t.image import (
 )
 from taikoi2t.ocr import Character, join_chars
 from taikoi2t.student import (
+    ERROR_STUDENT,
     StudentDictionary,
     normalize_student_name,
 )
@@ -280,5 +281,8 @@ def detect_opponent(reader: easyocr.Reader, grayscale: Image, modal: Bounding) -
 
 def error_line(settings: Args) -> str:
     return ("," if settings.csv else "\t").join(
-        ["FALSE"] + (["Error"] * (13 if settings.opponent else 12))
+        ["FALSE"]
+        + ([ERROR_STUDENT] * 6)
+        + (["Error"] if settings.opponent else [])
+        + ([ERROR_STUDENT] * 6)
     )
