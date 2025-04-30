@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import pytest
@@ -51,6 +50,14 @@ def test_parse_args_verbose() -> None:
     assert res5.verbose == VERBOSE_IMAGE
 
 
+def test_parse_args_csv() -> None:
+    res1 = parse_args("app -d dict.csv --csv image0.png".split())
+    assert res1.csv is True
+
+    res2 = parse_args("app -d dict.csv image0.png".split())
+    assert res2.csv is False
+
+
 def test_parse_args_files() -> None:
     res1 = parse_args("app -d dict.csv image0.png".split())
     assert [f.as_posix() for f in res1.files] == ["image0.png"]
@@ -64,7 +71,13 @@ def test_parse_args_files() -> None:
 
 
 def test_validate_args_valid(capsys: pytest.CaptureFixture[str]) -> None:
-    args1 = Args(Path("./students.csv"), False, VERBOSE_SILENT, [Path("image0.png")])
+    args1 = Args(
+        dictionary=Path("./students.csv"),
+        opponent=False,
+        csv=False,
+        verbose=VERBOSE_SILENT,
+        files=[Path("image0.png")],
+    )
     assert validate_args(args1) is True
 
     captured = capsys.readouterr()
@@ -73,7 +86,13 @@ def test_validate_args_valid(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_validate_args_not_found(capsys: pytest.CaptureFixture[str]) -> None:
-    args1 = Args(Path("./404.csv"), False, VERBOSE_SILENT, [Path("image0.png")])
+    args1 = Args(
+        dictionary=Path("./404.csv"),
+        opponent=False,
+        csv=False,
+        verbose=VERBOSE_SILENT,
+        files=[Path("image0.png")],
+    )
     with pytest.raises(SystemExit) as e:
         validate_args(args1)
     assert e.value.code == 1
@@ -86,7 +105,13 @@ def test_validate_args_not_found(capsys: pytest.CaptureFixture[str]) -> None:
 def test_validate_args_invalid_suffix_verbose_silent(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    args1 = Args(Path("./README.md"), False, VERBOSE_SILENT, [Path("image0.png")])
+    args1 = Args(
+        dictionary=Path("./README.md"),
+        opponent=False,
+        csv=False,
+        verbose=VERBOSE_SILENT,
+        files=[Path("image0.png")],
+    )
     assert validate_args(args1) is True
 
     captured = capsys.readouterr()
@@ -97,18 +122,15 @@ def test_validate_args_invalid_suffix_verbose_silent(
 def test_validate_args_invalid_suffix_verbose_error(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    args1 = Args(Path("./README.md"), False, VERBOSE_ERROR, [Path("image0.png")])
+    args1 = Args(
+        dictionary=Path("./README.md"),
+        opponent=False,
+        csv=False,
+        verbose=VERBOSE_ERROR,
+        files=[Path("image0.png")],
+    )
     assert validate_args(args1) is True
 
     captured = capsys.readouterr()
     assert captured.out == ""
     assert captured.err == "WARNING: README.md has invalid suffix as CSV\n"
-
-
-def set_argv(command: str) -> None:
-    reset_argv()
-    sys.argv = command.split()
-
-
-def reset_argv() -> None:
-    del sys.argv[:]

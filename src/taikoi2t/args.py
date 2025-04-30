@@ -14,6 +14,7 @@ VERBOSE_IMAGE = 3
 class Args:
     dictionary: Path
     opponent: bool
+    csv: bool
     verbose: int
     files: Sequence[Path]
 
@@ -31,6 +32,9 @@ def parse_args(args: Sequence[str]) -> Args:
         "--opponent", action="store_true", help="include the name of opponent"
     )
     arg_parser.add_argument(
+        "--csv", action="store_true", help="change output to CSV (default: TSV)"
+    )
+    arg_parser.add_argument(
         "-v",
         "--verbose",
         action="count",
@@ -39,7 +43,8 @@ def parse_args(args: Sequence[str]) -> Args:
     )
     arg_parser.add_argument("files", type=Path, nargs="+", help="target images")
 
-    return arg_parser.parse_args(args=args[1:], namespace=Args(Path(), False, 0, []))
+    namespace = Args(Path(), False, False, 0, [])
+    return arg_parser.parse_args(args=args[1:], namespace=namespace)
 
 
 def validate_args(args: Args) -> bool:

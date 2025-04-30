@@ -54,7 +54,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if not path.exists():
             if args.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path.as_posix()} is not found", file=sys.stderr)
-            print(empty_tsv_line(args))
+            print(error_line(args))
             continue
 
         if args.verbose >= VERBOSE_PRINT:
@@ -67,7 +67,7 @@ def run(argv: Sequence[str] | None = None) -> None:
                 print(
                     f"ERROR: {path.as_posix()} cannot read as an image", file=sys.stderr
                 )
-            print(empty_tsv_line(args))
+            print(error_line(args))
             continue
 
         # for OCR
@@ -77,7 +77,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if modal_bounding is None:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Cannot detect any result-box", file=sys.stderr)
-            print(empty_tsv_line(args))
+            print(error_line(args))
             continue
         if args.verbose >= VERBOSE_IMAGE:
             (left, top, right, bottom) = modal_bounding
@@ -97,7 +97,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if len(detected_student_names) < 12:
             if args.verbose >= VERBOSE_ERROR:
                 print("ERROR: Student's names detection error", file=sys.stderr)
-            print(empty_tsv_line(args))
+            print(error_line(args))
             continue
 
         # matching student's names with the dictionary
@@ -125,7 +125,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if args.verbose >= VERBOSE_PRINT:
             print(row)
         else:
-            print("\t".join(row))
+            print(("," if args.csv else "\t").join(row))
 
 
 def read_student_alias_pair_file(path: Path) -> List[Tuple[str, str]] | None:
@@ -278,5 +278,7 @@ def detect_opponent(reader: easyocr.Reader, grayscale: Image, modal: Bounding) -
     return join_chars(detected_chars)
 
 
-def empty_tsv_line(settings: Args) -> str:
-    return "\t".join(['""'] * (14 if settings.opponent else 13))
+def error_line(settings: Args) -> str:
+    return ("," if settings.csv else "\t").join(
+        ["FALSE"] + (["Error"] * (13 if settings.opponent else 12))
+    )
