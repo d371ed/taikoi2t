@@ -25,13 +25,13 @@ pytest = "^8.3.5"
 opencv-stubs = "^0.0.11"
 
 [[tool.poetry.source]]
-name = "torch_cu126"
+name = "torch_source"
 url = "https://download.pytorch.org/whl/cu126"
 priority = "explicit"
 
 [tool.poetry.dependencies]
-torch = {source = "torch_cu126"}
-torchvision = {source = "torch_cu126"}
+torch = {source = "torch_source"}
+torchvision = {source = "torch_source"}
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

@@ -1443,7 +1443,7 @@ optree = ["optree (>=0.13.0)"]
 [package.source]
 type = "legacy"
 url = "https://download.pytorch.org/whl/cu126"
-reference = "torch_cu126"
+reference = "torch_source"
 
 [[package]]
 name = "torchvision"
@@ -1479,7 +1479,7 @@ scipy = ["scipy"]
 [package.source]
 type = "legacy"
 url = "https://download.pytorch.org/whl/cu126"
-reference = "torch_cu126"
+reference = "torch_source"
 
 [[package]]
 name = "triton"
@@ -1521,4 +1521,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13"
-content-hash = "9d8b711ed0ed1c4e1fb750e8bdea3e3afee883576fafbd354393448f77a0bba5"
+content-hash = "d1683f0f763303fd0a1cf1ecf4b450b876c6e836990fd900fcf56816c7484f02"

@@ -218,13 +218,13 @@ CUDA 11.8 へ変更する例:
 
 ```toml:pyproject.toml
 [[tool.poetry.source]]
-name = "torch_cu118" # 下と同一になれば名前は変更しなくても良いです
-url = "https://download.pytorch.org/whl/cu118" # 該当バージョンの URL へ変更
+name = "torch_source"
+url = "https://download.pytorch.org/whl/cu126" # 該当バージョン取得先へ変更
 priority = "explicit"
 
 [tool.poetry.dependencies]
-torch = {source = "torch_cu118"}
-torchvision = {source = "torch_cu118"}
+torch = {source = "torch_source"}
+torchvision = {source = "torch_source"}
 ```
 
 グラフィックボードを搭載していない PC など, CPU で実行する場合は上記コードを削除してください.
