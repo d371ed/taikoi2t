@@ -49,6 +49,14 @@ def test_parse_args_no_alias() -> None:
     assert res2.no_alias is False
 
 
+def test_parse_args_no_sp_sort() -> None:
+    res1 = parse_args("app -d dict.csv --no-sp-sort image0.png".split())
+    assert res1.no_sp_sort is True
+
+    res2 = parse_args("app -d dict.csv image0.png".split())
+    assert res2.no_sp_sort is False
+
+
 def test_parse_args_verbose() -> None:
     res1 = parse_args("app -d dict.csv --verbose image0.png".split())
     assert res1.verbose == VERBOSE_ERROR
@@ -84,6 +92,7 @@ def test_validate_args_valid(capsys: pytest.CaptureFixture[str]) -> None:
         opponent=False,
         csv=False,
         no_alias=False,
+        no_sp_sort=False,
         verbose=VERBOSE_SILENT,
         files=[Path("image0.png")],
     )
@@ -100,6 +109,7 @@ def test_validate_args_not_found(capsys: pytest.CaptureFixture[str]) -> None:
         opponent=False,
         csv=False,
         no_alias=False,
+        no_sp_sort=False,
         verbose=VERBOSE_SILENT,
         files=[Path("image0.png")],
     )
@@ -120,6 +130,7 @@ def test_validate_args_invalid_suffix_verbose_silent(
         opponent=False,
         csv=False,
         no_alias=False,
+        no_sp_sort=False,
         verbose=VERBOSE_SILENT,
         files=[Path("image0.png")],
     )
@@ -138,6 +149,7 @@ def test_validate_args_invalid_suffix_verbose_error(
         opponent=False,
         csv=False,
         no_alias=False,
+        no_sp_sort=False,
         verbose=VERBOSE_ERROR,
         files=[Path("image0.png")],
     )

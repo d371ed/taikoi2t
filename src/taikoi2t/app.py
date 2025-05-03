@@ -153,10 +153,10 @@ def extract_match_result(
     match_result = MatchResult(
         player_wins=player_wins,
         player_strikers=player_sts,
-        player_specials=dictionary.sort_specials(player_sps),
+        player_specials=player_sps,
         opponent=opponent,
         opponent_strikers=opponent_sts,
-        opponent_specials=dictionary.sort_specials(opponent_sps),
+        opponent_specials=opponent_sps,
     )
 
     return match_result

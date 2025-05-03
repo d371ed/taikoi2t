@@ -16,12 +16,17 @@ class Args:
     opponent: bool
     csv: bool
     no_alias: bool
+    no_sp_sort: bool
     verbose: int
     files: Sequence[Path]
 
     @property
     def alias(self) -> bool:
         return not self.no_alias
+
+    @property
+    def sp_sort(self) -> bool:
+        return not self.no_sp_sort
 
 
 def parse_args(args: Sequence[str]) -> Args:
@@ -45,6 +50,9 @@ def parse_args(args: Sequence[str]) -> Args:
         help="turn off alias mapping for student's name",
     )
     arg_parser.add_argument(
+        "--no-sp-sort", action="store_true", help="turn off sorting specials"
+    )
+    arg_parser.add_argument(
         "-v",
         "--verbose",
         action="count",
@@ -53,7 +61,7 @@ def parse_args(args: Sequence[str]) -> Args:
     )
     arg_parser.add_argument("files", type=Path, nargs="+", help="target images")
 
-    namespace = Args(Path(), False, False, False, 0, [])
+    namespace = Args(Path(), False, False, False, False, 0, [])
     return arg_parser.parse_args(args=args[1:], namespace=namespace)
 
 

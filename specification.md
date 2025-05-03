@@ -1,7 +1,7 @@
 # 仕様
 
 ```
-usage: [-h] -d DICTIONARY [--opponent] [--csv] [--no-alias] [-v] files [files ...]
+usage: taikoi2t [-h] -d DICTIONARY [--opponent] [--csv] [--no-alias] [--no-sp-sort] [-v] files [files ...]
 
 positional arguments:
   files                 target images
@@ -13,6 +13,7 @@ options:
   --opponent            include the name of opponent
   --csv                 change output to CSV (default: TSV)
   --no-alias            turn off alias mapping for student's name
+  --no-sp-sort          turn off sorting specials
   -v, --verbose         print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)
 ```
 
@@ -49,6 +50,14 @@ TSV と同様ヘッダ行はありません.
 別名への変換機能をオフ.
 
 辞書での指定を無視し, ゲーム内の生徒名表記で出力します.
+
+
+### `--no-sp-sort`
+
+任意.
+スペシャル生徒の左右調整機能をオフ.
+
+辞書内の記載順を無視し, 入力画像の順番を維持します.
 
 
 ### `-v, --verbose`

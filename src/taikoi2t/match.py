@@ -19,13 +19,16 @@ class MatchResult:
         name_mapping: Callable[[str], str] = (
             dictionary.apply_alias if settings.alias else (lambda n: n)
         )
+        sort_specials: Callable[[Specials], Specials] = (
+            dictionary.sort_specials if settings.sp_sort else (lambda s: s)
+        )
         row = chain(
             ["TRUE" if self.player_wins else "FALSE"],
             (name_mapping(n) for n in self.player_strikers),
-            (name_mapping(m) for m in self.player_specials),
+            (name_mapping(m) for m in sort_specials(self.player_specials)),
             ([self.opponent or "Error"] if settings.opponent else []),
             (name_mapping(n) for n in self.opponent_strikers),
-            (name_mapping(n) for n in self.opponent_specials),
+            (name_mapping(n) for n in sort_specials(self.opponent_specials)),
         )
         return ("," if settings.csv else "\t").join(row)
 
