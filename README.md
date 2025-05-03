@@ -4,8 +4,8 @@
 
 ```sh
 > poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\Screenshot_2025.04.01_01.00.00.000.png
-TRUE    ホシノ  バネル  マリナ  アジュリ        水シロコ        ヒビキ  水ハナコ        マリナ  シロコ＊        ホシノ  水シロコ        ヒビキ
-FALSE    イオリ  ホシノ  シロコ＊        シュン  水シロコ        佐天涙子        ホシノ  シロコ＊        マリナ  レイサ  水シロコ        ヒビキ
+TRUE	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ	ヒビキ
+FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホシノ	シロコ＊	マリナ	レイサ	水シロコ	ヒビキ
 ```
 
 出力は Google スプレッドシートへ貼り付けることを想定し, デフォルトでは TSV になります.
@@ -40,166 +40,28 @@ FALSE    イオリ  ホシノ  シロコ＊        シュン  水シロコ      
 
 CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり容量の大きいダウンロードが発生するはずです.
 
+`poetry run taikoi2t --help` でヘルプが表示されれば成功です. (初回実行時はやや時間がかかると思います.)
+
 
 ## 使い方
 
-```
-usage: taikoi2t [-h] -d DICTIONARY [--opponent] [-v] files [files ...]
-
-positional arguments:
-  files                 target images
-
-options:
-  -h, --help            show this help message and exit
-  -d, --dictionary DICTIONARY
-                        student dictionary (CSV)
-  --opponent            include the name of opponent
-  --csv                 change output to CSV (default: TSV)
-  -v, --verbose         print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)
-```
-
-### コマンド例
+`poetry run taikoi2t -d (生徒辞書 CSV へのパス)` に続き抽出対象の画像ファイル (PNG, JPEG 等) のパスを渡してください.
 
 ```sh
 > poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\videoframe_100000.jpg
 ```
 
-以下のようにすると対戦相手名を出力に含むようになります.
+以下のようにすると対戦相手名を出力に含むようになります. 詳しくは [`specification.md`](./specification.md) をご覧ください.
 
 ```sh
 > poetry run taikoi2t -d .\students.csv --opponent .\Screenshot_2025.04.01_00.00.00.000.png
 ```
 
-### `-d, --dictionary`
+例えば出力の TSV をクリップボードにコピーするには, PowerShell であれば `Set-Clipboard` にリダイレクトします.
 
-必須.
-生徒名と別名を記述した辞書ファイルを指定します.
-
-ヘッダ行を含まない CSV で, `ゲーム中の生徒名表記,出力時変換したい略称` の2列で記述されている必要があります.
-
-```csv
-シロコ（水着）,水シロコ
-アイリ,
-アイリ（バンド）,バアイリ
-アオバ,
-...
+```powershell
+> poetry run taikoi2t -d .\students.csv .\videoframe_100000.jpg | Set-Clipboard
 ```
-
-略称が不要な場合は, 空文字列にすることでそのままの生徒名を出力します.
-
-また, **並び順はスペシャル生徒のソートに利用** するため, 優先して左側に配置したい生徒はより先に記述してください.
-
-### `--opponent`
-
-任意.
-指定すると対戦相手 (右側) の名前を検出し, 右側チームの前の列に挿入します.
-
-小書き文字 (っ, ゃ, ぃ 等) や濁音/半濁音 (が, ぱ 等), 日本語外の漢字は検出精度が低い傾向にあります.
-
-### `--csv`
-
-任意.
-指定すると出力形式を CSV に変更します. TSV と同様ヘッダ行はありません.
-
-### `-v, --verbose`
-
-任意.
-デバッグ用の出力モードへ切り替えます.
-
-#### デフォルト (指定なし)
-
-Silent. 通常の解析結果を返すモード.
-致命的なエラーを除き stderr へも出力を行いません.
-
-画像単位でエラーがあった場合, 実行を継続しつつ stdout へ文字列部分がすべて `Error` の行を出力します.
-
-#### `-v` または `--verbose`
-
-Error. エラーと警告を stderr へ出力するモード.
-
-画像単位でエラーがあった場合に実行は継続されますが, stderr へエラーを出力します. Silent 時と同様に stdout へのエラー行出力もおこなわれます.
-
-#### `-vv`
-
-Print. stdout へデバッグ用の情報を詳細に出力するモード.
-
-結果の出力形式は TSV ではなくなります.
-
-#### `-vvv`
-
-Image. Print の内容に加え `cv2.imshow` で画像解析の途中経過を表示するモード.
-
-### `-h, --help`
-
-上記ヘルプを表示します.
-
-### `files`
-
-1つ以上必須.
-解析対象となる画像のパスを指定します. ワイルドカードには非対応です.
-
-複数渡された場合, 左から順に解析し結果を1画像あたり1行ずつ出力します.
-何らかのエラーで抽出が失敗した場合, 文字列部分がすべて `Error` の行が出力されます.
-
-### 出力
-
-以下の形式で出力されます. (区切り文字はスペースに置換してありますが実際はタブ文字 `\t` か `,` です.)
-
-```
-勝敗 L1 L2 L3 L4 LSP1 LSP2 (対戦相手) R1 R2 R3 R4 RSP1 RSP2
-```
-
-1行が1つの画像に対応します. 出力順は入力順と同じです.
-
-抽出に失敗した場合は以下のようなエラー行が出力されます.
-
-```
-FALSE Error Error Error Error Error Error Error Error Error Error Error Error Error
-```
-
-#### 勝敗
-
-`TRUE` or `FALSE`.
-左側のチームが勝利の場合 `TRUE` です. 解析にエラーのあった行の場合は `FALSE` になります.
-
-### L1 ～ L4
-
-`str`.
-左側のチームのストライカー生徒名 (略称) です. 攻撃のログなら A1 ～ A4, 防御のログなら D1 ～ D4 です.
-
-何らかのエラーがあり抽出に失敗した場合は `Error` になります. (他の文字列の列も同じです.)
-
-### LSP1, LSP2
-
-`str`.
-左側のチームのスペシャル生徒名 (略称) です. 与えた辞書ファイルの順に左右が調整されます.
-
-### (対戦相手)
-
-`str`. (`--opponent` オプション指定時のみ.)
-対戦相手 (右側のチーム) の先生名です.
-
-### R1 ～ R4
-
-`str`.
-右側のチームのストライカー生徒名 (略称) です. 攻撃のログなら D1 ～ D4, 防御のログなら A1 ～ A4 です.
-
-### RSP1, RSP2
-
-`str`.
-右側のチームのスペシャル生徒名 (略称) です. 与えた辞書ファイルの順に左右が調整されます.
-
-
-## 辞書ファイルのメンテナンス
-
-`-d, --dictionary` に与える生徒名辞書を `students.csv` として同梱しています.
-
-新たに生徒が追加された場合にはこのファイルに追加する必要があります.
-精度向上のため, **この辞書に無い生徒名は検出が不可能** です.
-
-また, 出力される生徒略称を変更したい場合もこのファイルを編集してください.
-
-(`students.csv` はスクレイピングにより自動生成していますが, 現在 Google スプレッドシートによって実装されているため同梱していません.)
 
 
 ## フロントエンドスクリプト
@@ -212,7 +74,7 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 
 OCR の動作に [PyTorch](https://pytorch.org/) を利用しています.
 
-デフォルトでは CUDA 12.6 対応の PyTorch をインストールしますが, お使いの GPU に適合しない場合はインストール前に `pyproject.toml` を書き換えることで構成をカスタマイズする必要があります.
+デフォルトでは CUDA 12.6 対応の PyTorch をインストールしますが, お使いの GPU に適合しない場合はインストール前に [`pyproject.toml`](./pyproject.toml) を書き換えることで構成をカスタマイズする必要があります.
 
 CUDA 11.8 へ変更する例:
 
@@ -253,6 +115,8 @@ torchvision = {source = "torch_source"}
 
 
 ## 免責等
+
+特に CUDA 周りなどすべての環境での快適な動作を保証することはできません.
 
 本ソフトウェアはゲーム「ブルーアーカイブ」の開発元の Nexon Games 社および日本語版パブリッシャーの Yostar 社とは無関係です.
 
