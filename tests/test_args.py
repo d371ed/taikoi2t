@@ -33,6 +33,22 @@ def test_parse_args_opponent() -> None:
     assert res2.opponent is False
 
 
+def test_parse_args_csv() -> None:
+    res1 = parse_args("app -d dict.csv --csv image0.png".split())
+    assert res1.csv is True
+
+    res2 = parse_args("app -d dict.csv image0.png".split())
+    assert res2.csv is False
+
+
+def test_parse_args_no_alias() -> None:
+    res1 = parse_args("app -d dict.csv --no-alias image0.png".split())
+    assert res1.no_alias is True
+
+    res2 = parse_args("app -d dict.csv image0.png".split())
+    assert res2.no_alias is False
+
+
 def test_parse_args_verbose() -> None:
     res1 = parse_args("app -d dict.csv --verbose image0.png".split())
     assert res1.verbose == VERBOSE_ERROR
@@ -48,14 +64,6 @@ def test_parse_args_verbose() -> None:
 
     res5 = parse_args("app -d dict.csv -vvv image0.png".split())
     assert res5.verbose == VERBOSE_IMAGE
-
-
-def test_parse_args_csv() -> None:
-    res1 = parse_args("app -d dict.csv --csv image0.png".split())
-    assert res1.csv is True
-
-    res2 = parse_args("app -d dict.csv image0.png".split())
-    assert res2.csv is False
 
 
 def test_parse_args_files() -> None:
@@ -75,6 +83,7 @@ def test_validate_args_valid(capsys: pytest.CaptureFixture[str]) -> None:
         dictionary=Path("./students.csv"),
         opponent=False,
         csv=False,
+        no_alias=False,
         verbose=VERBOSE_SILENT,
         files=[Path("image0.png")],
     )
@@ -90,6 +99,7 @@ def test_validate_args_not_found(capsys: pytest.CaptureFixture[str]) -> None:
         dictionary=Path("./404.csv"),
         opponent=False,
         csv=False,
+        no_alias=False,
         verbose=VERBOSE_SILENT,
         files=[Path("image0.png")],
     )
@@ -109,6 +119,7 @@ def test_validate_args_invalid_suffix_verbose_silent(
         dictionary=Path("./README.md"),
         opponent=False,
         csv=False,
+        no_alias=False,
         verbose=VERBOSE_SILENT,
         files=[Path("image0.png")],
     )
@@ -126,6 +137,7 @@ def test_validate_args_invalid_suffix_verbose_error(
         dictionary=Path("./README.md"),
         opponent=False,
         csv=False,
+        no_alias=False,
         verbose=VERBOSE_ERROR,
         files=[Path("image0.png")],
     )

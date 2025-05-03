@@ -59,13 +59,6 @@ class StudentDictionary:
             else self.ordered_names[no_diacritics_index]  # returns the original name
         )
 
-    def arrange_team(self, team: Sequence[str]) -> List[str]:
-        strikers, specials = split_team(team)
-        return [
-            self.apply_alias(name)
-            for name in chain(strikers, self.sort_specials(specials))
-        ]
-
     def apply_alias(self, name: str) -> str:
         if name == "" or name == ERROR_STUDENT:
             return name

@@ -40,36 +40,6 @@ def test_StudentDictionary_match() -> None:
     assert dic.match("ナキサ") == "ナギサ"
 
 
-def test_StudentDictionary_arrange_team() -> None:
-    dic = StudentDictionary(
-        [
-            ("シロコ（水着）", "水シロコ"),
-            ("ホシノ", ""),
-            ("ヒビキ", ""),
-            ("シロコ＊テラー", "シロコ＊"),
-            ("佐天涙子", ""),
-            ("ノノミ", ""),
-            ("ネル（バニーガール）", "バネル"),
-            ("シュン", ""),
-            ("アヤネ（水着）", "水アヤネ"),
-        ]
-    )
-    res1 = dic.arrange_team(
-        [
-            "ホシノ",
-            "ネル（バニーガール）",
-            "シロコ＊テラー",
-            "ノノミ",
-            "アヤネ（水着）",
-            "シロコ（水着）",
-        ]
-    )
-    assert res1 == ["ホシノ", "バネル", "シロコ＊", "ノノミ", "水シロコ", "水アヤネ"]
-
-    res2 = dic.arrange_team(["ホシノ", "セリカ", "シロコ", "ノノミ", "アヤネ", ""])
-    assert res2 == ["ホシノ", "Error", "Error", "ノノミ", "Error", ""]
-
-
 def test_StudentDictionary_apply_alias() -> None:
     dic = StudentDictionary(
         [("シロコ（水着）", "水シロコ"), ("ヒビキ", ""), ("佐天涙子", "")]

@@ -1,7 +1,7 @@
 # 仕様
 
 ```
-usage: taikoi2t [-h] -d DICTIONARY [--opponent] [-v] files [files ...]
+usage: [-h] -d DICTIONARY [--opponent] [--csv] [--no-alias] [-v] files [files ...]
 
 positional arguments:
   files                 target images
@@ -12,6 +12,7 @@ options:
                         student dictionary (CSV)
   --opponent            include the name of opponent
   --csv                 change output to CSV (default: TSV)
+  --no-alias            turn off alias mapping for student's name
   -v, --verbose         print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)
 ```
 
@@ -29,7 +30,7 @@ options:
 ### `--opponent`
 
 任意.
-指定すると対戦相手 (右側) の名前を検出し, 右側チームの前の列に挿入.
+対戦相手 (右側) の名前を検出し, 右側チームの前の列に挿入.
 
 小書き文字 (っ, ゃ, ぃ 等) や濁音/半濁音 (が, ぱ 等), 日本語外の漢字は検出精度が低い傾向にあります.
 
@@ -37,9 +38,17 @@ options:
 ### `--csv`
 
 任意.
-指定すると出力形式を CSV へ変更.
+出力形式を CSV へ変更.
 
 TSV と同様ヘッダ行はありません.
+
+
+### `--no-alias`
+
+任意.
+別名への変換機能をオフ.
+
+辞書での指定を無視し, ゲーム内の生徒名表記で出力します.
 
 
 ### `-v, --verbose`
@@ -100,6 +109,9 @@ Image. Print の内容に加え `cv2.imshow` で画像解析の途中経過を�
 
 1行が1つの画像に対応します. 出力順は入力順と同じです.
 
+5人以下のチームは該当の生徒名が空文字列になります.
+現状スペシャル生徒の判定ができないため, ストライカーの枠に左詰めで入ることがあります.
+
 抽出に失敗した場合は以下のようなエラー行が出力されます.
 
 ```
@@ -116,7 +128,7 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 ### L1 ～ L4
 
 `str`.
-左側のチームのストライカー生徒名 (略称). 攻撃のログなら A1 ～ A4, 防御のログなら D1 ～ D4.
+左側のチームのストライカー生徒名. 攻撃のログなら A1 ～ A4, 防御のログなら D1 ～ D4.
 
 何らかのエラーがあり抽出に失敗した場合は `Error`. (他の文字列のカラムも同じです.)
 
@@ -124,9 +136,10 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 ### LSP1, LSP2
 
 `str`.
-左側のチームのスペシャル生徒名 (略称).
+左側のチームのスペシャル生徒名.
 
-与えた辞書ファイルの順に左右が調整されます.
+与えた辞書ファイルの記載順に左右が調整されます.
+(ただし現状生徒名でのスペシャル判定ができないため, 5人以下の編成の場合は正常に機能しません. 右側チームも同様です.)
 
 
 ### (対戦相手)
@@ -138,22 +151,22 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 ### R1 ～ R4
 
 `str`.
-右側のチームのストライカー生徒名 (略称). 攻撃のログなら D1 ～ D4, 防御のログなら A1 ～ A4.
+右側のチームのストライカー生徒名. 攻撃のログなら D1 ～ D4, 防御のログなら A1 ～ A4.
 
 
 ### RSP1, RSP2
 
 `str`.
-右側のチームのスペシャル生徒名 (略称).
+右側のチームのスペシャル生徒名.
 
-与えた辞書ファイルの順に左右が調整されます.
+与えた辞書ファイルの記載順に左右が調整されます.
 
 
 ## 生徒名辞書
 
 `-d, --dictionary` に与える生徒名辞書を [`students.csv`](./students.csv) として同梱しています.
 
-ヘッダ行を含まない CSV で, `ゲーム中の生徒名表記,出力時変換したい略称` の2列で記述されている必要があります.
+ヘッダ行を含まない CSV で, `ゲーム中の生徒名表記,出力時変換したい別名` の2列で記述されている必要があります.
 
 ```csv
 シロコ（水着）,水シロコ
@@ -163,7 +176,7 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 ...
 ```
 
-略称が不要な場合は, 空文字列にすることでそのままの生徒名を出力します.
+別名が不要な場合は, 空文字列にすることでそのままの生徒名を出力します.
 
 また, **並び順はスペシャル生徒のソートに利用** するため, 優先して左側に配置したい生徒はより先に記述してください.
 (上の例では `シロコ（水着）` を常に左のデータへ正規化するため最初の行に記述しています.)
