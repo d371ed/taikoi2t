@@ -1,7 +1,7 @@
 [project]
 name = "taikoi2t"
 version = "1.0.0"
-description = "Extract team information from PvP results screenshots in the Blue Archive."
+description = "Extract team information from PvP results screenshots in Blue Archive."
 authors = [
     {name = "D371 Amamoriya"}
 ]
