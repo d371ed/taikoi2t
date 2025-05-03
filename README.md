@@ -63,10 +63,12 @@ CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり�
 > poetry run taikoi2t -d .\students.csv .\videoframe_100000.jpg | Set-Clipboard
 ```
 
+新規生徒追加時や, 出力される略称を変更したい場合は辞書 [`students.csv`](./students.csv) の編集が必要になります. [生徒名辞書](./specification.md#生徒名辞書) をご覧ください.
 
-## フロントエンドスクリプト
 
-`frontend` ディレクトリ下に Windows 環境での利用例となるスクリプトがあります.
+## 利用例
+
+[`frontend`](./frontend/) ディレクトリ下に Windows 環境での利用例となるスクリプトがあります.
 バッチファイル (.bat) をダブルクリックで起動することを想定しています.
 
 
@@ -102,6 +104,7 @@ torchvision = {source = "torch_source"}
 - `ホシノ（臨戦）` のタイプ判定
 - 大きくアスペクト比の狂った画像からの抽出
 - 列入れ替えやフォーマット文字列など, 出力形式のカスタマイズ
+- サーバとしての動作
 
 
 ## 制作者の実行環境
