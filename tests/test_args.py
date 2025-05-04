@@ -41,6 +41,20 @@ def test_parse_args_csv() -> None:
     assert res2.csv is False
 
 
+def test_parse_args_json() -> None:
+    res1 = parse_args("app -d dict.csv --json image0.png".split())
+    assert res1.json is True
+
+    res2 = parse_args("app -d dict.csv image0.png".split())
+    assert res2.json is False
+
+
+def test_parse_args_format_group() -> None:
+    with pytest.raises(SystemExit) as e:
+        parse_args("app -d dict.csv --csv --json image0.png".split())
+    assert e.value.code == 2
+
+
 def test_parse_args_no_alias() -> None:
     res1 = parse_args("app -d dict.csv --no-alias image0.png".split())
     assert res1.no_alias is True
@@ -91,6 +105,7 @@ def test_validate_args_valid(capsys: pytest.CaptureFixture[str]) -> None:
         dictionary=Path("./students.csv"),
         opponent=False,
         csv=False,
+        json=False,
         no_alias=False,
         no_sp_sort=False,
         verbose=VERBOSE_SILENT,
@@ -108,6 +123,7 @@ def test_validate_args_not_found(capsys: pytest.CaptureFixture[str]) -> None:
         dictionary=Path("./404.csv"),
         opponent=False,
         csv=False,
+        json=False,
         no_alias=False,
         no_sp_sort=False,
         verbose=VERBOSE_SILENT,
@@ -129,6 +145,7 @@ def test_validate_args_invalid_suffix_verbose_silent(
         dictionary=Path("./README.md"),
         opponent=False,
         csv=False,
+        json=False,
         no_alias=False,
         no_sp_sort=False,
         verbose=VERBOSE_SILENT,
@@ -148,6 +165,7 @@ def test_validate_args_invalid_suffix_verbose_error(
         dictionary=Path("./README.md"),
         opponent=False,
         csv=False,
+        json=False,
         no_alias=False,
         no_sp_sort=False,
         verbose=VERBOSE_ERROR,

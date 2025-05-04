@@ -1,9 +1,36 @@
 from taikoi2t.student import (
+    Specials,
+    Student,
     StudentDictionary,
+    new_empty_student,
+    new_error_student,
     normalize_student_name,
     remove_diacritics,
-    split_team,
 )
+
+
+def test_Specials_sort() -> None:
+    student1 = Student(1, "シロコ（水着）", "水シロコ")
+    student2 = Student(2, "ヒビキ", None)
+    student3 = Student(3, "サツキ", None)
+    errored = new_error_student()
+    empty = new_empty_student()
+
+    assert Specials(student1, student2).sort() == Specials(student1, student2)
+    assert Specials(student2, student1).sort() == Specials(student1, student2)
+    assert Specials(student3, student1).sort() == Specials(student1, student3)
+
+    assert Specials(student2, errored).sort() == Specials(student2, errored)
+    assert Specials(errored, student2).sort() == Specials(student2, errored)
+
+    assert Specials(student2, empty).sort() == Specials(student2, empty)
+    assert Specials(empty, student2).sort() == Specials(student2, empty)
+
+    assert Specials(errored, empty).sort() == Specials(errored, empty)
+    assert Specials(empty, errored).sort() == Specials(errored, empty)
+
+    assert Specials(errored, errored).sort() == Specials(errored, errored)
+    assert Specials(empty, empty).sort() == Specials(empty, empty)
 
 
 def test_StudentDictionary_match() -> None:
@@ -13,8 +40,6 @@ def test_StudentDictionary_match() -> None:
             ("ホシノ", ""),
             ("ヒビキ", ""),
             ("シロコ＊テラー", "シロコ＊"),
-            ("佐天涙子", ""),
-            ("ノノミ", ""),
             ("シロコ（ライディング）", "ラシロコ"),
             ("シロコ", ""),
             ("ネル（バニーガール）", "バネル"),
@@ -23,71 +48,19 @@ def test_StudentDictionary_match() -> None:
             ("キサキ", ""),
             ("ナギサ", ""),
             ("サキ", ""),
-            ("シュン", ""),
-            ("アヤネ（水着）", "水アヤネ"),
-            ("ジュリ（アルバイト）", "アジュリ"),
-            ("ジュリ", ""),
         ]
     )
-    assert dic.match("ホシノ") == "ホシノ"
-    assert dic.match("シロコ") == "シロコ"
-    assert dic.match("シロコ（水着）") == "シロコ（水着）"
-    assert dic.match("シロコ（水着") == "シロコ（水着）"
-    # assert dic.match("シロコ水者") == "シロコ（水着）" # cannot match this correctly
-    assert dic.match("シロコ＊テラー") == "シロコ＊テラー"
-    assert dic.match("シロコミテラー") == "シロコ＊テラー"
-    assert dic.match("ネル（ハニーカール）") == "ネル（バニーガール）"
-    assert dic.match("ナキサ") == "ナギサ"
-
-
-def test_StudentDictionary_apply_alias() -> None:
-    dic = StudentDictionary(
-        [("シロコ（水着）", "水シロコ"), ("ヒビキ", ""), ("佐天涙子", "")]
+    assert dic.match("ホシノ") == Student(1, "ホシノ", None)
+    assert dic.match("シロコ") == Student(5, "シロコ", None)
+    assert dic.match("シロコ（水着）") == Student(0, "シロコ（水着）", "水シロコ")
+    assert dic.match("シロコ（水着") == Student(0, "シロコ（水着）", "水シロコ")
+    # assert dic.match("シロコ水者") == Student(0, "シロコ（水着）", "水シロコ") # cannot match this correctly
+    assert dic.match("シロコ＊テラー") == Student(3, "シロコ＊テラー", "シロコ＊")
+    assert dic.match("シロコミテラー") == Student(3, "シロコ＊テラー", "シロコ＊")
+    assert dic.match("ネル（ハニーカール）") == Student(
+        6, "ネル（バニーガール）", "バネル"
     )
-
-    assert dic.apply_alias("シロコ（水着）") == "水シロコ"
-    assert dic.apply_alias("ヒビキ") == "ヒビキ"
-    assert dic.apply_alias("サツキ") == "Error"
-    assert dic.apply_alias("Error") == "Error"
-    assert dic.apply_alias("") == ""
-
-
-def test_StudentDictionary_sort_specials() -> None:
-    dic = StudentDictionary([("シロコ（水着）", ""), ("ヒビキ", ""), ("佐天涙子", "")])
-
-    assert dic.sort_specials(("シロコ（水着）", "ヒビキ")) == (
-        "シロコ（水着）",
-        "ヒビキ",
-    )
-    assert dic.sort_specials(("ヒビキ", "シロコ（水着）")) == (
-        "シロコ（水着）",
-        "ヒビキ",
-    )
-    assert dic.sort_specials(("シロコ（水着）", "サツキ")) == (
-        "シロコ（水着）",
-        "Error",
-    )
-    assert dic.sort_specials(("ウタハ", "ヒビキ")) == ("ヒビキ", "Error")
-    assert dic.sort_specials(("シロコ（水着）", "")) == ("シロコ（水着）", "")
-    assert dic.sort_specials(("", "")) == ("", "")
-    assert dic.sort_specials(("ノドカ（温泉）", "")) == ("Error", "")
-    assert dic.sort_specials(("", "ノドカ（温泉）")) == ("Error", "")
-
-
-def test_split_team() -> None:
-    st1, sp1 = split_team(
-        ["ホシノ", "シュン", "シロコ＊テラー", "レイサ", "ヒビキ", "シロコ（水着）"]
-    )
-    assert st1 == ("ホシノ", "シュン", "シロコ＊テラー", "レイサ")
-    assert sp1 == ("ヒビキ", "シロコ（水着）")
-
-    st2, sp2 = split_team(["ユウカ", "ノドカ（温泉）", "マリー"])
-    assert st2 == ("ユウカ", "ノドカ（温泉）", "マリー", "")
-    assert sp2 == ("", "")
-
-    st3, sp3 = split_team([])
-    assert st3 == ("", "", "", "")
-    assert sp3 == ("", "")
+    assert dic.match("ナキサ") == Student(10, "ナギサ", None)
 
 
 def test_normalize_student_name() -> None:

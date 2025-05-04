@@ -1,15 +1,70 @@
-from itertools import chain
-from typing import Dict, Iterable, List, Sequence, Tuple
+from dataclasses import dataclass
+from typing import Dict, Iterable, List, Optional, Self, Tuple
 
 import rapidfuzz
 from rapidfuzz import process
 
 from taikoi2t.args import VERBOSE_PRINT, VERBOSE_SILENT
 
-type Strikers = Tuple[str, str, str, str]
-type Specials = Tuple[str, str]
+DEFAULT_STUDENT_INDEX = -1
+ERROR_STUDENT_NAME: str = "Error"
 
-ERROR_STUDENT: str = "Error"
+
+@dataclass
+class Student:
+    index: int
+    name: str
+    alias: Optional[str]
+    # damage_dealt: int # TODO
+
+
+def new_empty_student() -> Student:
+    return Student(DEFAULT_STUDENT_INDEX, "", None)
+
+
+def new_error_student() -> Student:
+    return Student(DEFAULT_STUDENT_INDEX, ERROR_STUDENT_NAME, None)
+
+
+@dataclass
+class Strikers:
+    striker1: Student
+    striker2: Student
+    striker3: Student
+    striker4: Student
+
+    def list(self) -> List[Student]:
+        return [self.striker1, self.striker2, self.striker3, self.striker4]
+
+
+@dataclass
+class Specials:
+    special1: Student
+    special2: Student
+
+    def list(self) -> List[Student]:
+        return [self.special1, self.special2]
+
+    # modify self
+    def sort(self) -> Self:
+        sp1_is_valid = self.special1.index >= 0
+        sp2_is_valid = self.special2.index >= 0
+
+        if sp1_is_valid and sp2_is_valid and self.special1.index > self.special2.index:
+            self.__swap()
+        elif not sp1_is_valid and sp2_is_valid:
+            self.__swap()
+        elif (
+            not sp1_is_valid
+            and not sp2_is_valid
+            and self.special1.name != ERROR_STUDENT_NAME
+        ):
+            self.__swap()  # sp1 is empty (maybe) -> right
+
+        return self
+
+    def __swap(self) -> None:
+        self.special1, self.special2 = (self.special2, self.special1)
 
 
 class StudentDictionary:
@@ -21,13 +76,15 @@ class StudentDictionary:
             remove_diacritics(n) for n in self.ordered_names
         ]
         self.allow_char_list: str = "".join(set("".join(self.ordered_names))) + "()"
-        self.output_mapping: Dict[str, str] = dict(normalized)
+        self.alias_mapping: Dict[str, str] = dict(
+            filter(lambda p: p[1] != "", normalized)
+        )
 
-    def match(self, detected_text: str, verbose: int = VERBOSE_SILENT) -> str:
+    def match(self, detected_text: str, verbose: int = VERBOSE_SILENT) -> Student:
         if detected_text == "":
-            return ""
+            return new_empty_student()
 
-        normal_matched, normal_score, _ = process.extractOne(
+        normal_matched, normal_score, normal_index = process.extractOne(
             detected_text,
             self.ordered_names,
             scorer=rapidfuzz.distance.Levenshtein.normalized_similarity,
@@ -36,8 +93,10 @@ class StudentDictionary:
             print(
                 f"(normal) input: {detected_text}, matched: {normal_matched}, score: {normal_score}"
             )
-        if normal_score > 0.95:
-            return normal_matched  # exact matched
+        if normal_score > 0.95:  # exact matched
+            return Student(
+                normal_index, normal_matched, self.alias_mapping.get(normal_matched)
+            )
 
         # taking care of missing diacritics in OCR
         # re-matching without diacritics
@@ -53,48 +112,17 @@ class StudentDictionary:
             print(
                 f"(no diacritics) input: {no_diacritics_text}, matched: {no_diacritics_matched}, score: {no_diacritics_score}"
             )
-        return (
-            normal_matched
-            if normal_score > no_diacritics_score
-            else self.ordered_names[no_diacritics_index]  # returns the original name
-        )
-
-    def apply_alias(self, name: str) -> str:
-        if name == "" or name == ERROR_STUDENT:
-            return name
+        if normal_score > no_diacritics_score:
+            return Student(
+                normal_index, normal_matched, self.alias_mapping.get(normal_matched)
+            )
         else:
-            try:
-                mapped: str = self.output_mapping[name]
-                return mapped or name
-            except KeyError:
-                return ERROR_STUDENT
-
-    def sort_specials(self, specials: Specials) -> Specials:
-        sp1_index, sp1_name = self.__index_name_pair(specials[0])
-        sp2_index, sp2_name = self.__index_name_pair(specials[1])
-        return (sp1_name, sp2_name) if sp1_index <= sp2_index else (sp2_name, sp1_name)
-
-    def __index_name_pair(self, name: str) -> Tuple[int, str]:
-        if name == "":
-            # more to the right of Error
-            return (len(self.ordered_names) + 1, "")
-        elif name in self.ordered_names:
-            return (self.ordered_names.index(name), name)
-        else:
-            # more to the right of a valid name
-            return (len(self.ordered_names), ERROR_STUDENT)
-
-
-def split_team(students: Sequence[str]) -> Tuple[Strikers, Specials]:
-    ss: Sequence[str] = (
-        list(chain(students, [""] * (6 - len(students))))
-        if len(students) < 6
-        else students
-    )
-    return (
-        (ss[0], ss[1], ss[2], ss[3]),
-        (ss[4], ss[5]),
-    )
+            original_name = self.ordered_names[no_diacritics_index]
+            return Student(
+                no_diacritics_index,
+                original_name,
+                self.alias_mapping.get(original_name),
+            )
 
 
 def normalize_student_name(name: str) -> str:

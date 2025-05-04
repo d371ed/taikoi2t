@@ -1,5 +1,8 @@
 import csv
+import json
 import sys
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import List, Sequence, Tuple
 
@@ -10,14 +13,13 @@ from taikoi2t.args import (
     VERBOSE_ERROR,
     VERBOSE_IMAGE,
     VERBOSE_PRINT,
-    Args,
     parse_args,
     validate_args,
 )
-from taikoi2t.bounding import size_of as bounding_size_of
 from taikoi2t.image import (
-    Bounding,
+    BoundingBox,
     Image,
+    ImageMeta,
     cutout_image,
     level_contrast,
     resize_to,
@@ -26,18 +28,40 @@ from taikoi2t.image import (
 )
 from taikoi2t.match import MatchResult, new_errored_match_result
 from taikoi2t.ocr import Character, join_chars
+from taikoi2t.settings import Settings, new_settings_from
 from taikoi2t.student import (
+    Student,
     StudentDictionary,
     normalize_student_name,
-    split_team,
 )
+from taikoi2t.team import new_team_from
+
+
+@dataclass
+class RunResult:
+    arguments: List[str]
+    starts_at: str
+    ends_at: str
+    matches: List[MatchResult]
 
 
 def run(argv: Sequence[str] | None = None) -> None:
-    args = parse_args(argv or sys.argv)
-    validate_args(args)
+    starts_at: datetime = datetime.now()
+    run_result = RunResult(
+        arguments=list(argv or sys.argv),
+        starts_at=starts_at.isoformat(),
+        ends_at="",
+        matches=[],
+    )
+
+    args = parse_args(run_result.arguments)
     if args.verbose >= VERBOSE_PRINT:
         print(args)
+    validate_args(args)
+
+    settings = new_settings_from(args)
+    if settings.verbose >= VERBOSE_PRINT:
+        print(settings)
 
     student_alias_pairs = read_dictionary_source_file(args.dictionary)
     if student_alias_pairs is None:
@@ -49,39 +73,59 @@ def run(argv: Sequence[str] | None = None) -> None:
 
     student_dictionary = StudentDictionary(student_alias_pairs)
 
-    if args.verbose >= VERBOSE_PRINT:
+    if settings.verbose >= VERBOSE_PRINT:
         print(student_dictionary.allow_char_list)
 
-    reader = easyocr.Reader(["ja", "en"], verbose=args.verbose >= VERBOSE_PRINT)
+    reader = easyocr.Reader(["ja", "en"], verbose=settings.verbose >= VERBOSE_PRINT)
+
+    def append_match_result(match_result: MatchResult) -> None:
+        run_result.matches.append(match_result)
+        if settings.output_format != "json":
+            print(match_result.render(settings))
 
     for path in args.files:
+        image_meta = ImageMeta(path.as_posix(), path.name)
         if not path.exists():
-            if args.verbose >= VERBOSE_ERROR:
+            if settings.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path.as_posix()} is not found", file=sys.stderr)
-            print(new_errored_match_result().render(student_dictionary, args))
+            append_match_result(new_errored_match_result(image_meta))
             continue
 
-        if args.verbose >= VERBOSE_PRINT:
+        if settings.verbose >= VERBOSE_PRINT:
             print(f"=== {path.as_posix()} ===")
 
         # imread returns None when error occurred
         source: Image | None = cv2.imread(path.as_posix())
         if source is None:  # type: ignore
-            if args.verbose >= VERBOSE_ERROR:
+            if settings.verbose >= VERBOSE_ERROR:
                 print(
                     f"ERROR: {path.as_posix()} cannot read as an image", file=sys.stderr
                 )
-            print(new_errored_match_result().render(student_dictionary, args))
+            append_match_result(new_errored_match_result(image_meta))
             continue
 
-        match_result = (
-            extract_match_result(source, student_dictionary, reader, args)
-            or new_errored_match_result()
-        )
+        # overwrite dimensions
+        image_meta.height, image_meta.width, _ = source.shape
+        if settings.verbose >= VERBOSE_PRINT:
+            print(image_meta)
+
+        match_result = extract_match_result(
+            source, image_meta, student_dictionary, reader, settings
+        ) or new_errored_match_result(image_meta)
         if args.verbose >= VERBOSE_PRINT:
             print(match_result)
-        else:
-            print(match_result.render(student_dictionary, args))
+        append_match_result(match_result)
+
+    ends_at: datetime = datetime.now()
+    run_result.ends_at = ends_at.isoformat()
+    if settings.verbose >= VERBOSE_PRINT:
+        print("=== finished ===")
+        print(
+            f"start: {run_result.starts_at}, end: {run_result.ends_at}, elapsed: {ends_at - starts_at}"
+        )
+
+    if settings.output_format == "json":
+        print(json.dumps(asdict(run_result), ensure_ascii=False))
 
 
 def read_dictionary_source_file(path: Path) -> List[Tuple[str, str]] | None:
@@ -100,26 +144,34 @@ def read_dictionary_source_file(path: Path) -> List[Tuple[str, str]] | None:
 
 
 def extract_match_result(
-    source: Image, dictionary: StudentDictionary, reader: easyocr.Reader, settings: Args
+    source: Image,
+    image_meta: ImageMeta,
+    dictionary: StudentDictionary,
+    reader: easyocr.Reader,
+    settings: Settings,
 ) -> MatchResult | None:
     # for OCR
     grayscale: Image = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
 
-    modal_bounding = find_modal_bounding(grayscale, settings.verbose)
-    if modal_bounding is None:
+    modal = find_modal(grayscale, settings.verbose)
+    if modal is None:
         if settings.verbose >= VERBOSE_ERROR:
             print("ERROR: Cannot detect any result-box", file=sys.stderr)
         return None
     if settings.verbose >= VERBOSE_IMAGE:
-        (left, top, right, bottom) = modal_bounding
         show_image(
-            cv2.rectangle(source.copy(), (left, top), (right, bottom), (0, 255, 0))
+            cv2.rectangle(
+                source.copy(),
+                (modal.left, modal.top),
+                (modal.right, modal.bottom),
+                (0, 255, 0),
+            )
         )
 
     detected_student_names = detect_student_names(
         reader,
         grayscale,
-        modal_bounding,
+        modal,
         dictionary.allow_char_list,
         settings.verbose,
     )
@@ -133,36 +185,37 @@ def extract_match_result(
         return None
 
     # matching student's names with the dictionary
-    matched_student_names: List[str] = [
+    students: List[Student] = [
         dictionary.match(detected, settings.verbose)
         for detected in detected_student_names
     ]
 
-    player_sts, player_sps = split_team(matched_student_names[0:6])
-    opponent_sts, opponent_sps = split_team(matched_student_names[6:12])
+    player_team = new_team_from(students[0:6])
+    opponent_team = new_team_from(students[6:12])
+
+    if settings.sp_sort:
+        player_team.specials.sort()
+        opponent_team.specials.sort()
 
     # passes colored source image because checking win or lose uses mean saturation of the area
-    player_wins = check_player_wins(source, modal_bounding)
+    player_team.wins = check_player_wins(source, modal)
+    opponent_team.wins = not player_team.wins
 
-    opponent = (
-        detect_opponent(reader, grayscale, modal_bounding)
-        if settings.opponent
-        else None
+    opponent_team.owner = (
+        detect_opponent(reader, grayscale, modal) if settings.opponent else None
     )
 
-    match_result = MatchResult(
-        player_wins=player_wins,
-        player_strikers=player_sts,
-        player_specials=player_sps,
-        opponent=opponent,
-        opponent_strikers=opponent_sts,
-        opponent_specials=opponent_sps,
+    updated_image_meta = ImageMeta(
+        image_meta.path,
+        image_meta.name,
+        width=image_meta.width,
+        height=image_meta.height,
+        modal=modal,
     )
+    return MatchResult(updated_image_meta, player=player_team, opponent=opponent_team)
 
-    return match_result
 
-
-def find_modal_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
+def find_modal(grayscale: Image, verbose: int = 0) -> BoundingBox | None:
     RESULT_ASPECT_RATIO: float = 2.33
     ASPECT_RATIO_EPS: float = 0.05
     APPROX_PRECISION: float = 0.03
@@ -176,7 +229,7 @@ def find_modal_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
     if verbose >= VERBOSE_IMAGE:
         preview = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
 
-    result: Bounding | None = None
+    result: BoundingBox | None = None
     for contour in contours:
         epsilon: float = APPROX_PRECISION * cv2.arcLength(contour, True)  # type: ignore
         approx = cv2.approxPolyDP(contour, epsilon, True)  # type: ignore
@@ -191,7 +244,7 @@ def find_modal_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
             width > source_width / 2
             and abs(aspect_ratio - RESULT_ASPECT_RATIO) < ASPECT_RATIO_EPS
         ):
-            result = (left, top, left + width, top + height)
+            result = BoundingBox(left, top, left + width, top + height)
 
     if preview is not None:
         show_image(preview)
@@ -202,12 +255,11 @@ def find_modal_bounding(grayscale: Image, verbose: int = 0) -> Bounding | None:
 def detect_student_names(
     reader: easyocr.Reader,
     grayscale: Image,
-    modal: Bounding,
+    modal: BoundingBox,
     char_allow_list: str,
     verbose: int = 0,
 ) -> List[str]:
-    students_bounding = __get_students_bounding(modal)
-    student_name_images = __preprocess_students(grayscale, students_bounding)
+    student_name_images = __preprocess_students(grayscale, modal)
 
     results: List[str] = list()
     for image in student_name_images:
@@ -228,19 +280,17 @@ def detect_student_names(
     return results
 
 
-def __get_students_bounding(modal: Bounding) -> Bounding:
-    FOOTER_RATIO: float = 0.085
-    (left, _, right, bottom) = modal
-    (_, height) = bounding_size_of(modal)
-    footer_height = int(FOOTER_RATIO * height)
-    footer_top = int(bottom - footer_height)
-    return (left, footer_top, right, bottom)
-
-
-def __preprocess_students(grayscale: Image, bounding: Bounding) -> List[Image]:
+def __preprocess_students(grayscale: Image, modal: BoundingBox) -> List[Image]:
     WIDTH: int = 4000
 
-    footer = cutout_image(grayscale, bounding)
+    FOOTER_RATIO: float = 0.085
+    footer_height = int(FOOTER_RATIO * modal.height)
+    footer_top = int(modal.bottom - footer_height)
+    footer_area = BoundingBox(
+        left=modal.left, top=footer_top, right=modal.right, bottom=modal.bottom
+    )
+
+    footer = cutout_image(grayscale, footer_area)
     resized = resize_to(footer, WIDTH)
     skewed = skew(resized, 14.0)
     leveled = level_contrast(skewed, 112, 192)
@@ -255,24 +305,21 @@ def __preprocess_students(grayscale: Image, bounding: Bounding) -> List[Image]:
 
     results: List[Image] = list()
     for x in range(PLAYER_TEAM_LEFT, PLAYER_TEAM_LEFT + TEAM_WIDTH, PITCH):
-        results.append(cutout_image(leveled, (x, 0, (x + PITCH), height)))
+        results.append(cutout_image(leveled, BoundingBox(x, 0, (x + PITCH), height)))
     for x in range(OPPONENT_TEAM_LEFT, OPPONENT_TEAM_LEFT + TEAM_WIDTH, PITCH):
-        results.append(cutout_image(leveled, (x, 0, (x + PITCH), height)))
+        results.append(cutout_image(leveled, BoundingBox(x, 0, (x + PITCH), height)))
 
     return results
 
 
-def check_player_wins(source: Image, modal: Bounding) -> bool:
-    (left, top, _, _) = modal
-    (width, height) = bounding_size_of(modal)
-
-    bounding: Bounding = (
-        width // 12 + left,
-        height // 5 + top,
-        width // 6 + left,
-        height // 4 + top,
+def check_player_wins(source: Image, modal: BoundingBox) -> bool:
+    target = BoundingBox(
+        left=modal.width // 12 + modal.left,
+        top=modal.height // 5 + modal.top,
+        right=modal.width // 6 + modal.left,
+        bottom=modal.height // 4 + modal.top,
     )
-    win_or_lose_image = cutout_image(source, bounding)
+    win_or_lose_image = cutout_image(source, target)
 
     mean_saturation: int = cv2.mean(cv2.cvtColor(win_or_lose_image, cv2.COLOR_BGR2HSV))[
         1
@@ -281,17 +328,16 @@ def check_player_wins(source: Image, modal: Bounding) -> bool:
     return mean_saturation > 50
 
 
-def detect_opponent(reader: easyocr.Reader, grayscale: Image, modal: Bounding) -> str:
-    (left, top, _, _) = modal
-    (width, height) = bounding_size_of(modal)
-
-    bounding: Bounding = (
-        width * 5 // 6 + left,
-        height // 7 + top,
-        width + left,
-        height // 5 + top,
+def detect_opponent(
+    reader: easyocr.Reader, grayscale: Image, modal: BoundingBox
+) -> str:
+    target = BoundingBox(
+        left=modal.width * 5 // 6 + modal.left,
+        top=modal.height // 7 + modal.top,
+        right=modal.width + modal.left,
+        bottom=modal.height // 5 + modal.top,
     )
-    opponent_image: Image = cutout_image(grayscale, bounding)
+    opponent_image: Image = cutout_image(grayscale, target)
 
     detected_chars: List[Character] = reader.readtext(opponent_image)  # type: ignore
     return join_chars(detected_chars)

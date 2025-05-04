@@ -1,4 +1,6 @@
 import math
+from dataclasses import dataclass
+from typing import Optional
 
 import cv2
 import numpy
@@ -8,9 +10,33 @@ from cv2 import (
     warpAffine,
 )
 
-from taikoi2t.bounding import Bounding
-
 type Image = numpy.typing.NDArray[numpy.uint8]
+
+
+@dataclass
+class BoundingBox:
+    left: int
+    top: int
+    right: int
+    bottom: int
+
+    @property
+    def width(self) -> int:
+        return abs(self.right - self.left)
+
+    @property
+    def height(self) -> int:
+        return abs(self.bottom - self.top)
+
+
+@dataclass
+class ImageMeta:
+    path: str
+    name: str
+    # updated_at: str # TODO: typing
+    width: Optional[int] = None
+    height: Optional[int] = None
+    modal: Optional[BoundingBox] = None
 
 
 def resize_to(source: Image, width: int) -> Image:
@@ -27,9 +53,8 @@ def skew(source: Image, degree: float) -> Image:
     return warpAffine(source, mat, (int(width + height * tan_theta), height))
 
 
-def cutout_image(image: Image, bounding: Bounding) -> Image:
-    (left, top, right, bottom) = bounding
-    return image[top:bottom, left:right]
+def cutout_image(image: Image, area: BoundingBox) -> Image:
+    return image[area.top : area.bottom, area.left : area.right]
 
 
 #      ___

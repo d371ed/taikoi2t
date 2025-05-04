@@ -15,18 +15,11 @@ class Args:
     dictionary: Path
     opponent: bool
     csv: bool
+    json: bool
     no_alias: bool
     no_sp_sort: bool
     verbose: int
     files: Sequence[Path]
-
-    @property
-    def alias(self) -> bool:
-        return not self.no_alias
-
-    @property
-    def sp_sort(self) -> bool:
-        return not self.no_sp_sort
 
 
 def parse_args(args: Sequence[str]) -> Args:
@@ -41,9 +34,15 @@ def parse_args(args: Sequence[str]) -> Args:
     arg_parser.add_argument(
         "--opponent", action="store_true", help="include the name of opponent"
     )
-    arg_parser.add_argument(
+
+    format_group = arg_parser.add_mutually_exclusive_group()
+    format_group.add_argument(
         "--csv", action="store_true", help="change output to CSV (default: TSV)"
     )
+    format_group.add_argument(
+        "--json", action="store_true", help="change output to JSON (default: TSV)"
+    )
+
     arg_parser.add_argument(
         "--no-alias",
         action="store_true",
@@ -61,7 +60,7 @@ def parse_args(args: Sequence[str]) -> Args:
     )
     arg_parser.add_argument("files", type=Path, nargs="+", help="target images")
 
-    namespace = Args(Path(), False, False, False, False, 0, [])
+    namespace = Args(Path(), False, False, False, False, False, 0, [])
     return arg_parser.parse_args(args=args[1:], namespace=namespace)
 
 

@@ -1,7 +1,7 @@
 # 仕様
 
 ```
-usage: taikoi2t [-h] -d DICTIONARY [--opponent] [--csv] [--no-alias] [--no-sp-sort] [-v] files [files ...]
+usage: taikoi2t [-h] -d DICTIONARY [--opponent] [--csv | --json] [--no-alias] [--no-sp-sort] [-v] files [files ...]
 
 positional arguments:
   files                 target images
@@ -12,6 +12,7 @@ options:
                         student dictionary (CSV)
   --opponent            include the name of opponent
   --csv                 change output to CSV (default: TSV)
+  --json                change output to JSON (default: TSV)
   --no-alias            turn off alias mapping for student's name
   --no-sp-sort          turn off sorting specials
   -v, --verbose         print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)
@@ -42,6 +43,15 @@ options:
 出力形式を CSV へ変更.
 
 TSV と同様ヘッダ行はありません.
+`--json` と同時に指定はできません.
+
+
+### `--json`
+
+任意.
+出力形式を JSON へ変更.
+
+`--csv` と同時に指定はできません.
 
 
 ### `--no-alias`
@@ -108,7 +118,7 @@ Image. Print の内容に加え `cv2.imshow` で画像解析の途中経過を�
 何らかのエラーで抽出が失敗した場合, 文字列部分がすべて `Error` の行が出力されます.
 
 
-## 出力
+## TSV, CSV 出力
 
 以下の形式で出力されます. (区切り文字はスペースに置換してありますが実際はタブ文字 `\t` か `,` です.)
 
@@ -169,6 +179,123 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 右側のチームのスペシャル生徒名.
 
 与えた辞書ファイルの記載順に左右が調整されます.
+
+
+## JSON 出力
+
+以下のような形式で出力されます. (実際にはインデント無しで1行です.)
+
+<details>
+<summary>出力例を表示</summary>
+
+```json
+{
+  "arguments": [
+    "taikoi2t",
+    "-d",
+    ".\\students.csv",
+    ".\\tests\\images\\0010.png",
+    "--json"
+  ],
+  "starts_at": "2025-05-01T00:00:00.000000",
+  "ends_at": "2025-05-01T00:00:05.000000",
+  "matches": [
+    {
+      "image": {
+        "path": "tests/images/0010.png",
+        "name": "0010.png",
+        "width": 1920,
+        "height": 1080,
+        "modal": {
+          "left": 39,
+          "top": 141,
+          "right": 1881,
+          "bottom": 936
+        }
+      },
+      "player": {
+        "wins": true,
+        "owner": null,
+        "strikers": {
+          "striker1": {
+            "index": 90,
+            "name": "シロコ＊テラー",
+            "alias": "シロコ＊"
+          },
+          "striker2": {
+            "index": 84,
+            "name": "シュン",
+            "alias": null
+          },
+          "striker3": {
+            "index": 162,
+            "name": "ホシノ",
+            "alias": null
+          },
+          "striker4": {
+            "index": 211,
+            "name": "レイサ",
+            "alias": null
+          }
+        },
+        "specials": {
+          "special1": {
+            "index": 0,
+            "name": "シロコ（水着）",
+            "alias": "水シロコ"
+          },
+          "special2": {
+            "index": 74,
+            "name": "サツキ",
+            "alias": null
+          }
+        }
+      },
+      "opponent": {
+        "wins": false,
+        "owner": null,
+        "strikers": {
+          "striker1": {
+            "index": 162,
+            "name": "ホシノ",
+            "alias": null
+          },
+          "striker2": {
+            "index": 211,
+            "name": "レイサ",
+            "alias": null
+          },
+          "striker3": {
+            "index": 179,
+            "name": "ミドリ",
+            "alias": null
+          },
+          "striker4": {
+            "index": 90,
+            "name": "シロコ＊テラー",
+            "alias": "シロコ＊"
+          }
+        },
+        "specials": {
+          "special1": {
+            "index": 0,
+            "name": "シロコ（水着）",
+            "alias": "水シロコ"
+          },
+          "special2": {
+            "index": 150,
+            "name": "ヒビキ",
+            "alias": null
+          }
+        }
+      }
+    }
+  ]
+}
+```
+</details>
+
+生徒の `index` は与えられた辞書内での行位置 (行 - 1) を表します.
 
 
 ## 生徒名辞書
