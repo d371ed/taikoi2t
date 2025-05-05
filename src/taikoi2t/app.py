@@ -202,7 +202,9 @@ def extract_match_result(
     opponent_team.wins = not player_team.wins
 
     opponent_team.owner = (
-        detect_opponent(reader, grayscale, modal) if settings.opponent else None
+        detect_opponent(reader, grayscale, modal)
+        if settings.opponent or settings.output_format == "json"
+        else None
     )
 
     updated_image_meta = ImageMeta(

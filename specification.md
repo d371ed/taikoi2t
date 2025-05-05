@@ -201,7 +201,7 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
     "taikoi2t",
     "-d",
     ".\\students.csv",
-    ".\\tests\\images\\0010.png",
+    ".\\tests\\images\\0004.png",
     "--json"
   ],
   "starts_at": "2025-05-01T00:00:00.000000",
@@ -209,56 +209,18 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
   "matches": [
     {
       "image": {
-        "path": "tests/images/0010.png",
-        "name": "0010.png",
-        "width": 1920,
+        "path": "tests/images/0004.png",
+        "name": "0004.png",
+        "width": 2560,
         "height": 1080,
         "modal": {
-          "left": 39,
-          "top": 141,
-          "right": 1881,
-          "bottom": 936
+          "left": 215,
+          "top": 79,
+          "right": 2346,
+          "bottom": 998
         }
       },
       "player": {
-        "wins": true,
-        "owner": null,
-        "strikers": {
-          "striker1": {
-            "index": 90,
-            "name": "シロコ＊テラー",
-            "alias": "シロコ＊"
-          },
-          "striker2": {
-            "index": 84,
-            "name": "シュン",
-            "alias": null
-          },
-          "striker3": {
-            "index": 162,
-            "name": "ホシノ",
-            "alias": null
-          },
-          "striker4": {
-            "index": 211,
-            "name": "レイサ",
-            "alias": null
-          }
-        },
-        "specials": {
-          "special1": {
-            "index": 0,
-            "name": "シロコ（水着）",
-            "alias": "水シロコ"
-          },
-          "special2": {
-            "index": 74,
-            "name": "サツキ",
-            "alias": null
-          }
-        }
-      },
-      "opponent": {
         "wins": false,
         "owner": null,
         "strikers": {
@@ -268,19 +230,19 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
             "alias": null
           },
           "striker2": {
-            "index": 211,
-            "name": "レイサ",
+            "index": 187,
+            "name": "ミヤコ",
             "alias": null
           },
           "striker3": {
-            "index": 179,
-            "name": "ミドリ",
-            "alias": null
-          },
-          "striker4": {
             "index": 90,
             "name": "シロコ＊テラー",
             "alias": "シロコ＊"
+          },
+          "striker4": {
+            "index": 129,
+            "name": "ノノミ",
+            "alias": null
           }
         },
         "specials": {
@@ -290,8 +252,46 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
             "alias": "水シロコ"
           },
           "special2": {
-            "index": 150,
-            "name": "ヒビキ",
+            "index": 18,
+            "name": "アヤネ（水着）",
+            "alias": "水アヤネ"
+          }
+        }
+      },
+      "opponent": {
+        "wins": true,
+        "owner": "対戦相手",
+        "strikers": {
+          "striker1": {
+            "index": 162,
+            "name": "ホシノ",
+            "alias": null
+          },
+          "striker2": {
+            "index": 84,
+            "name": "シュン",
+            "alias": null
+          },
+          "striker3": {
+            "index": 90,
+            "name": "シロコ＊テラー",
+            "alias": "シロコ＊"
+          },
+          "striker4": {
+            "index": 211,
+            "name": "レイサ",
+            "alias": null
+          }
+        },
+        "specials": {
+          "special1": {
+            "index": 0,
+            "name": "シロコ（水着）",
+            "alias": "水シロコ"
+          },
+          "special2": {
+            "index": 217,
+            "name": "佐天涙子",
             "alias": null
           }
         }
