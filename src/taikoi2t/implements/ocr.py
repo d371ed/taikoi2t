@@ -1,10 +1,10 @@
-from typing import Iterable, List, Tuple
+from typing import Iterable, List
 
 from cv2 import rectangle
 
-from taikoi2t.image import Image, show_image
-
-type Character = Tuple[List[Tuple[int, int]], str, float]
+from taikoi2t.implements.image import show_image
+from taikoi2t.models.image import Image
+from taikoi2t.models.ocr import Character
 
 
 def join_chars(chars: Iterable[Character]) -> str:

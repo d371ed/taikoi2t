@@ -1,7 +1,7 @@
 import csv
 import json
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import List, Sequence, Tuple
@@ -9,47 +9,41 @@ from typing import List, Sequence, Tuple
 import cv2
 import easyocr  # type: ignore
 
-from taikoi2t.args import (
-    VERBOSE_ERROR,
-    VERBOSE_IMAGE,
-    VERBOSE_PRINT,
+from taikoi2t.implements.args import (
     parse_args,
     validate_args,
 )
-from taikoi2t.image import (
-    BoundingBox,
-    Image,
-    ImageMeta,
+from taikoi2t.implements.image import (
     cutout_image,
     level_contrast,
     resize_to,
     show_image,
     skew,
 )
-from taikoi2t.match import MatchResult, new_errored_match_result
-from taikoi2t.ocr import Character, join_chars
-from taikoi2t.settings import Settings, new_settings_from
-from taikoi2t.student import (
+from taikoi2t.implements.match import (
+    new_errored_match_result,
+    render_match,
+)
+from taikoi2t.implements.ocr import Character, join_chars
+from taikoi2t.implements.settings import Settings, new_settings_from
+from taikoi2t.implements.student import (
     Student,
     StudentDictionary,
     normalize_student_name,
 )
-from taikoi2t.team import new_team_from
-
-
-@dataclass
-class RunResult:
-    arguments: List[str]
-    starts_at: str
-    ends_at: str
-    matches: List[MatchResult]
+from taikoi2t.implements.team import new_team_from, sort_specials
+from taikoi2t.models.args import VERBOSE_ERROR, VERBOSE_IMAGE, VERBOSE_PRINT
+from taikoi2t.models.image import BoundingBox, Image, ImageMeta
+from taikoi2t.models.match import MatchResult
+from taikoi2t.models.run import RunResult
+from taikoi2t.models.team import Team
 
 
 def run(argv: Sequence[str] | None = None) -> None:
-    starts_at: datetime = datetime.now()
+    run_starts_at = datetime.now()
     run_result = RunResult(
         arguments=list(argv or sys.argv),
-        starts_at=starts_at.isoformat(),
+        starts_at=run_starts_at.isoformat(),
         ends_at="",
         matches=[],
     )
@@ -81,18 +75,19 @@ def run(argv: Sequence[str] | None = None) -> None:
     def append_match_result(match_result: MatchResult) -> None:
         run_result.matches.append(match_result)
         if settings.output_format != "json":
-            print(match_result.render(settings))
+            print(render_match(match_result, settings))
 
     for path in args.files:
+        image_process_starts_at = datetime.now()
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"=== START: {path.as_posix()} ===")
+
         image_meta = ImageMeta(path.as_posix(), path.name)
         if not path.exists():
             if settings.verbose >= VERBOSE_ERROR:
                 print(f"ERROR: {path.as_posix()} is not found", file=sys.stderr)
             append_match_result(new_errored_match_result(image_meta))
             continue
-
-        if settings.verbose >= VERBOSE_PRINT:
-            print(f"=== {path.as_posix()} ===")
 
         # imread returns None when error occurred
         source: Image | None = cv2.imread(path.as_posix())
@@ -116,12 +111,19 @@ def run(argv: Sequence[str] | None = None) -> None:
             print(match_result)
         append_match_result(match_result)
 
-    ends_at: datetime = datetime.now()
-    run_result.ends_at = ends_at.isoformat()
+        if settings.verbose >= VERBOSE_PRINT:
+            image_process_ends_at = datetime.now()
+            print(f"=== END: {path.as_posix()} ===")
+            print(
+                f"    start: {image_process_starts_at}, end: {image_process_ends_at}, elapsed: {image_process_ends_at - image_process_starts_at}"
+            )
+
+    run_ends_at = datetime.now()
+    run_result.ends_at = run_ends_at.isoformat()
     if settings.verbose >= VERBOSE_PRINT:
-        print("=== finished ===")
+        print("=== RUN FINISHED ===")
         print(
-            f"start: {run_result.starts_at}, end: {run_result.ends_at}, elapsed: {ends_at - starts_at}"
+            f"    start: {run_result.starts_at}, end: {run_result.ends_at}, elapsed: {run_ends_at - run_starts_at}"
         )
 
     if settings.output_format == "json":
@@ -156,7 +158,10 @@ def extract_match_result(
     modal = find_modal(grayscale, settings.verbose)
     if modal is None:
         if settings.verbose >= VERBOSE_ERROR:
-            print("ERROR: Cannot detect any result-box", file=sys.stderr)
+            print(
+                f"ERROR: Cannot detect any result-box in {image_meta.path}",
+                file=sys.stderr,
+            )
         return None
     if settings.verbose >= VERBOSE_IMAGE:
         show_image(
@@ -165,47 +170,100 @@ def extract_match_result(
                 (modal.left, modal.top),
                 (modal.right, modal.bottom),
                 (0, 255, 0),
-            )
+            ),
+            "modal",
         )
 
-    detected_student_names = detect_student_names(
-        reader,
-        grayscale,
-        modal,
-        dictionary.allow_char_list,
-        settings.verbose,
-    )
+    player_team: Team
+    opponent_team: Team
+    if "students" in settings.requirements:
+        starts_at = datetime.now()
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- START students ({image_meta.path}) ---")
 
-    if len(detected_student_names) < 12:
-        if settings.verbose >= VERBOSE_ERROR:
+        detected_student_names = detect_student_names(
+            reader,
+            grayscale,
+            modal,
+            dictionary.allow_char_list,
+            settings.verbose,
+        )
+
+        if len(detected_student_names) < 12:
+            if settings.verbose >= VERBOSE_ERROR:
+                print(
+                    f"ERROR: Student's names detection error. len: {len(detected_student_names)}",
+                    file=sys.stderr,
+                )
+            return None
+
+        # matching student's names with the dictionary
+        students: List[Student] = [
+            dictionary.match(detected, settings.verbose)
+            for detected in detected_student_names
+        ]
+
+        player_team = new_team_from(students[0:6])
+        opponent_team = new_team_from(students[6:12])
+
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- END students ({image_meta.path}) ---")
+            ends_at = datetime.now()
             print(
-                f"ERROR: Student's names detection error. len: {len(detected_student_names)}",
-                file=sys.stderr,
+                f"    start: {starts_at}, end: {ends_at}, elapsed: {ends_at - starts_at}"
             )
-        return None
-
-    # matching student's names with the dictionary
-    students: List[Student] = [
-        dictionary.match(detected, settings.verbose)
-        for detected in detected_student_names
-    ]
-
-    player_team = new_team_from(students[0:6])
-    opponent_team = new_team_from(students[6:12])
+    else:
+        player_team = new_team_from([])
+        opponent_team = new_team_from([])
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- SKIP students ({image_meta.path}) ---")
 
     if settings.sp_sort:
-        player_team.specials.sort()
-        opponent_team.specials.sort()
+        # overwrite
+        player_team.specials = sort_specials(player_team.specials)
+        opponent_team.specials = sort_specials(opponent_team.specials)
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- DONE sp_sort ({image_meta.path}) ---")
+    else:
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- SKIP sp_sort ({image_meta.path}) ---")
 
-    # passes colored source image because checking win or lose uses mean saturation of the area
-    player_team.wins = check_player_wins(source, modal)
-    opponent_team.wins = not player_team.wins
+    if "win_or_lose" in settings.requirements:
+        starts_at = datetime.now()
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- START win_or_lose ({image_meta.path}) ---")
 
-    opponent_team.owner = (
-        detect_opponent(reader, grayscale, modal)
-        if settings.opponent or settings.output_format == "json"
-        else None
-    )
+        # passes colored source image because checking win or lose uses mean saturation of the area
+        # overwrite
+        player_team.wins = check_player_wins(source, modal)
+        opponent_team.wins = not player_team.wins
+
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- END win_or_lose ({image_meta.path}) ---")
+            ends_at = datetime.now()
+            print(
+                f"    start: {starts_at}, end: {ends_at}, elapsed: {ends_at - starts_at}"
+            )
+    else:
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- SKIP win_or_lose ({image_meta.path}) ---")
+
+    if "opponent" in settings.requirements:
+        starts_at = datetime.now()
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- START opponent ({image_meta.path}) ---")
+
+        opponent_team.owner = detect_opponent(reader, grayscale, modal)  # overwrite
+
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- END opponent ({image_meta.path}) ---")
+            ends_at = datetime.now()
+            print(
+                f"    start: {starts_at}, end: {ends_at}, elapsed: {ends_at - starts_at}"
+            )
+    else:
+        if settings.verbose >= VERBOSE_PRINT:
+            print(f"--- SKIP opponent ({image_meta.path}) ---")
 
     updated_image_meta = ImageMeta(
         image_meta.path,

@@ -1,35 +1,19 @@
 import argparse
 import sys
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import List, Sequence
 
 from taikoi2t import TAIKOI2T_VERSION
-
-VERBOSE_SILENT = 0
-VERBOSE_ERROR = 1
-VERBOSE_PRINT = 2
-VERBOSE_IMAGE = 3
-
-
-@dataclass
-class Args:
-    dictionary: Path
-    opponent: bool
-    csv: bool
-    json: bool
-    no_alias: bool
-    no_sp_sort: bool
-    verbose: int
-    files: Sequence[Path]
+from taikoi2t.implements.column import COLUMN_DICTIONARY
+from taikoi2t.models.args import VERBOSE_ERROR, VERBOSE_SILENT, Args
 
 
 def parse_args(args: Sequence[str]) -> Args:
     if len(args) == 0:
         print("FATAL: args is empty", file=sys.stderr)
         sys.exit(1)
-    arg_parser = argparse.ArgumentParser(args[0])
 
+    arg_parser = argparse.ArgumentParser(args[0])
     arg_parser.add_argument(
         "--version", action="version", version=f"taikoi2t {TAIKOI2T_VERSION}"
     )
@@ -37,8 +21,13 @@ def parse_args(args: Sequence[str]) -> Args:
     arg_parser.add_argument(
         "-d", "--dictionary", type=Path, required=True, help="student dictionary (CSV)"
     )
-    arg_parser.add_argument(
+
+    column_group = arg_parser.add_mutually_exclusive_group()
+    column_group.add_argument(
         "--opponent", action="store_true", help="include the name of opponent"
+    )
+    column_group.add_argument(
+        "-c", "--columns", nargs="+", help="select columns in a row"
     )
 
     format_group = arg_parser.add_mutually_exclusive_group()
@@ -66,7 +55,7 @@ def parse_args(args: Sequence[str]) -> Args:
     )
     arg_parser.add_argument("files", type=Path, nargs="+", help="target images")
 
-    namespace = Args(Path(), False, False, False, False, False, 0, [])
+    namespace = Args(Path(), False, [], False, False, False, False, 0, [])
     return arg_parser.parse_args(args=args[1:], namespace=namespace)
 
 
@@ -83,5 +72,12 @@ def validate_args(args: Args) -> bool:
             f"WARNING: {args.dictionary.as_posix()} has invalid suffix as CSV",
             file=sys.stderr,
         )
+
+    unknown_columns: List[str] = [
+        c for c in args.columns if c not in COLUMN_DICTIONARY.keys()
+    ]
+    if len(unknown_columns) > 0:
+        print(f"FATAL: unknown columns {', '.join(unknown_columns)}", file=sys.stderr)
+        sys.exit(1)
 
     return True  # currently always returns True

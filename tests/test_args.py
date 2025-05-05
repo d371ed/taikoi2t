@@ -2,14 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from taikoi2t.args import (
+from taikoi2t.implements.args import parse_args, validate_args
+from taikoi2t.models.args import (
     VERBOSE_ERROR,
     VERBOSE_IMAGE,
     VERBOSE_PRINT,
     VERBOSE_SILENT,
     Args,
-    parse_args,
-    validate_args,
 )
 
 
@@ -31,6 +30,32 @@ def test_parse_args_opponent() -> None:
 
     res2 = parse_args("app -d dict.csv image0.png".split())
     assert res2.opponent is False
+
+
+def test_parse_args_columns() -> None:
+    res1 = parse_args("app -d dict.csv image0.png -c ABC DEF".split())
+    assert res1.columns == ["ABC", "DEF"]
+
+    res2 = parse_args("app -d dict.csv image0.png --columns BCD EFG".split())
+    assert res2.columns == ["BCD", "EFG"]
+
+    res3 = parse_args("app -d dict.csv image0.png".split())
+    assert res3.columns == []
+
+    res4 = parse_args("app -d dict.csv -c CDE FGH -- image0.png".split())
+    assert res4.columns == ["CDE", "FGH"]
+    assert len(res4.files) == 1
+    assert res4.files[0].as_posix() == "image0.png"
+
+    with pytest.raises(SystemExit) as e:
+        parse_args("app -d dict.csv image0.png -c".split())
+    assert e.value.code == 2
+
+
+def test_parse_args_column_group() -> None:
+    with pytest.raises(SystemExit) as e:
+        parse_args("app -d dict.csv --opponent -c ABC -- image0.png".split())
+    assert e.value.code == 2
 
 
 def test_parse_args_csv() -> None:
@@ -104,6 +129,7 @@ def test_validate_args_valid(capsys: pytest.CaptureFixture[str]) -> None:
     args1 = Args(
         dictionary=Path("./students.csv"),
         opponent=False,
+        columns=[],
         csv=False,
         json=False,
         no_alias=False,
@@ -122,6 +148,7 @@ def test_validate_args_not_found(capsys: pytest.CaptureFixture[str]) -> None:
     args1 = Args(
         dictionary=Path("./404.csv"),
         opponent=False,
+        columns=[],
         csv=False,
         json=False,
         no_alias=False,
@@ -144,6 +171,7 @@ def test_validate_args_invalid_suffix_verbose_silent(
     args1 = Args(
         dictionary=Path("./README.md"),
         opponent=False,
+        columns=[],
         csv=False,
         json=False,
         no_alias=False,
@@ -164,6 +192,7 @@ def test_validate_args_invalid_suffix_verbose_error(
     args1 = Args(
         dictionary=Path("./README.md"),
         opponent=False,
+        columns=[],
         csv=False,
         json=False,
         no_alias=False,
@@ -176,3 +205,24 @@ def test_validate_args_invalid_suffix_verbose_error(
     captured = capsys.readouterr()
     assert captured.out == ""
     assert captured.err == "WARNING: README.md has invalid suffix as CSV\n"
+
+
+def test_validate_args_unknown_columns(capsys: pytest.CaptureFixture[str]) -> None:
+    args1 = Args(
+        dictionary=Path("./students.csv"),
+        opponent=False,
+        columns=["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7"],
+        csv=False,
+        json=False,
+        no_alias=False,
+        no_sp_sort=False,
+        verbose=VERBOSE_SILENT,
+        files=[Path("image0.png")],
+    )
+    with pytest.raises(SystemExit) as e:
+        validate_args(args1)
+    assert e.value.code == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == "FATAL: unknown columns L0, L7\n"

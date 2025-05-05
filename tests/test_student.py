@@ -1,36 +1,9 @@
-from taikoi2t.student import (
-    Specials,
-    Student,
+from taikoi2t.implements.student import (
     StudentDictionary,
-    new_empty_student,
-    new_error_student,
     normalize_student_name,
     remove_diacritics,
 )
-
-
-def test_Specials_sort() -> None:
-    student1 = Student(1, "シロコ（水着）", "水シロコ")
-    student2 = Student(2, "ヒビキ", None)
-    student3 = Student(3, "サツキ", None)
-    errored = new_error_student()
-    empty = new_empty_student()
-
-    assert Specials(student1, student2).sort() == Specials(student1, student2)
-    assert Specials(student2, student1).sort() == Specials(student1, student2)
-    assert Specials(student3, student1).sort() == Specials(student1, student3)
-
-    assert Specials(student2, errored).sort() == Specials(student2, errored)
-    assert Specials(errored, student2).sort() == Specials(student2, errored)
-
-    assert Specials(student2, empty).sort() == Specials(student2, empty)
-    assert Specials(empty, student2).sort() == Specials(student2, empty)
-
-    assert Specials(errored, empty).sort() == Specials(errored, empty)
-    assert Specials(empty, errored).sort() == Specials(errored, empty)
-
-    assert Specials(errored, errored).sort() == Specials(errored, errored)
-    assert Specials(empty, empty).sort() == Specials(empty, empty)
+from taikoi2t.models.student import Student
 
 
 def test_StudentDictionary_match() -> None:

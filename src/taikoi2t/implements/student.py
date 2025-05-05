@@ -1,21 +1,14 @@
-from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Self, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 import rapidfuzz
 from rapidfuzz import process
 
-from taikoi2t.args import VERBOSE_PRINT, VERBOSE_SILENT
-
-DEFAULT_STUDENT_INDEX = -1
-ERROR_STUDENT_NAME: str = "Error"
-
-
-@dataclass
-class Student:
-    index: int
-    name: str
-    alias: Optional[str]
-    # damage_dealt: int # TODO
+from taikoi2t.models.args import VERBOSE_PRINT, VERBOSE_SILENT
+from taikoi2t.models.student import (
+    DEFAULT_STUDENT_INDEX,
+    ERROR_STUDENT_NAME,
+    Student,
+)
 
 
 def new_empty_student() -> Student:
@@ -24,47 +17,6 @@ def new_empty_student() -> Student:
 
 def new_error_student() -> Student:
     return Student(DEFAULT_STUDENT_INDEX, ERROR_STUDENT_NAME, None)
-
-
-@dataclass
-class Strikers:
-    striker1: Student
-    striker2: Student
-    striker3: Student
-    striker4: Student
-
-    def list(self) -> List[Student]:
-        return [self.striker1, self.striker2, self.striker3, self.striker4]
-
-
-@dataclass
-class Specials:
-    special1: Student
-    special2: Student
-
-    def list(self) -> List[Student]:
-        return [self.special1, self.special2]
-
-    # modify self
-    def sort(self) -> Self:
-        sp1_is_valid = self.special1.index >= 0
-        sp2_is_valid = self.special2.index >= 0
-
-        if sp1_is_valid and sp2_is_valid and self.special1.index > self.special2.index:
-            self.__swap()
-        elif not sp1_is_valid and sp2_is_valid:
-            self.__swap()
-        elif (
-            not sp1_is_valid
-            and not sp2_is_valid
-            and self.special1.name != ERROR_STUDENT_NAME
-        ):
-            self.__swap()  # sp1 is empty (maybe) -> right
-
-        return self
-
-    def __swap(self) -> None:
-        self.special1, self.special2 = (self.special2, self.special1)
 
 
 class StudentDictionary:

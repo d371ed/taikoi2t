@@ -1,5 +1,7 @@
-from taikoi2t.student import Specials, Strikers, Student, new_empty_student
-from taikoi2t.team import Team, new_team_from
+from taikoi2t.implements.student import new_empty_student, new_error_student
+from taikoi2t.implements.team import new_team_from, sort_specials
+from taikoi2t.models.student import Student
+from taikoi2t.models.team import Specials, Strikers, Team
 
 
 def test_new_team_from() -> None:
@@ -47,3 +49,27 @@ def test_new_team_from() -> None:
     assert new_team_from([]) == Team(
         False, None, Strikers(empty, empty, empty, empty), Specials(empty, empty)
     )
+
+
+def test_sort_specials() -> None:
+    student1 = Student(1, "シロコ（水着）", "水シロコ")
+    student2 = Student(2, "ヒビキ", None)
+    student3 = Student(3, "サツキ", None)
+    errored = new_error_student()
+    empty = new_empty_student()
+
+    assert sort_specials(Specials(student1, student2)) == Specials(student1, student2)
+    assert sort_specials(Specials(student2, student1)) == Specials(student1, student2)
+    assert sort_specials(Specials(student3, student1)) == Specials(student1, student3)
+
+    assert sort_specials(Specials(student2, errored)) == Specials(student2, errored)
+    assert sort_specials(Specials(errored, student2)) == Specials(student2, errored)
+
+    assert sort_specials(Specials(student2, empty)) == Specials(student2, empty)
+    assert sort_specials(Specials(empty, student2)) == Specials(student2, empty)
+
+    assert sort_specials(Specials(errored, empty)) == Specials(errored, empty)
+    assert sort_specials(Specials(empty, errored)) == Specials(errored, empty)
+
+    assert sort_specials(Specials(errored, errored)) == Specials(errored, errored)
+    assert sort_specials(Specials(empty, empty)) == Specials(empty, empty)

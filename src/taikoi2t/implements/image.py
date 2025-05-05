@@ -1,6 +1,4 @@
 import math
-from dataclasses import dataclass
-from typing import Optional
 
 import cv2
 import numpy
@@ -10,33 +8,7 @@ from cv2 import (
     warpAffine,
 )
 
-type Image = numpy.typing.NDArray[numpy.uint8]
-
-
-@dataclass
-class BoundingBox:
-    left: int
-    top: int
-    right: int
-    bottom: int
-
-    @property
-    def width(self) -> int:
-        return abs(self.right - self.left)
-
-    @property
-    def height(self) -> int:
-        return abs(self.bottom - self.top)
-
-
-@dataclass
-class ImageMeta:
-    path: str
-    name: str
-    # updated_at: str # TODO: typing
-    width: Optional[int] = None
-    height: Optional[int] = None
-    modal: Optional[BoundingBox] = None
+from taikoi2t.models.image import BoundingBox, Image
 
 
 def resize_to(source: Image, width: int) -> Image:

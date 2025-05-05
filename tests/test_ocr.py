@@ -1,6 +1,7 @@
 from typing import List
 
-from taikoi2t.ocr import Character, join_chars
+from taikoi2t.implements.ocr import join_chars
+from taikoi2t.models.ocr import Character
 
 
 def test_join_chars() -> None:
