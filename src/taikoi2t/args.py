@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from taikoi2t import TAIKOI2T_VERSION
+
 VERBOSE_SILENT = 0
 VERBOSE_ERROR = 1
 VERBOSE_PRINT = 2
@@ -27,6 +29,10 @@ def parse_args(args: Sequence[str]) -> Args:
         print("FATAL: args is empty", file=sys.stderr)
         sys.exit(1)
     arg_parser = argparse.ArgumentParser(args[0])
+
+    arg_parser.add_argument(
+        "--version", action="version", version=f"taikoi2t {TAIKOI2T_VERSION}"
+    )
 
     arg_parser.add_argument(
         "-d", "--dictionary", type=Path, required=True, help="student dictionary (CSV)"

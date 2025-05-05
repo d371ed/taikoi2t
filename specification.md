@@ -1,13 +1,15 @@
 # 仕様
 
 ```
-usage: taikoi2t [-h] -d DICTIONARY [--opponent] [--csv | --json] [--no-alias] [--no-sp-sort] [-v] files [files ...]
+usage: taikoi2t [-h] [--version] -d DICTIONARY [--opponent] [--csv | --json] [--no-alias] [--no-sp-sort] [-v]
+                                                                   files [files ...]
 
 positional arguments:
   files                 target images
 
 options:
   -h, --help            show this help message and exit
+  --version             show program's version number and exit
   -d, --dictionary DICTIONARY
                         student dictionary (CSV)
   --opponent            include the name of opponent
@@ -107,6 +109,11 @@ Image. Print の内容に加え `cv2.imshow` で画像解析の途中経過を�
 ### `-h, --help`
 
 上記ヘルプを表示.
+
+
+### `--version`
+
+バージョン情報を表示.
 
 
 ### `files`
