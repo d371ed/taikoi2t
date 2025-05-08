@@ -19,6 +19,7 @@ FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホ�
 - スペシャルの左右を辞書順に統一
 - 勝敗の取得
 - 対戦相手名の取得 (`--opponent`)
+- 出力列のカスタマイズ (`--columns`)
 - 出力形式は TSV, CSV, JSON
 
 **※注意** [PyTorch](https://pytorch.org/) のインストールにより, これだけで 4.7GB 以上のストレージ容量が必要になるはずです. CPU 版に変更することで省容量化は可能ですが, 実行速度が大きく低下します.
@@ -51,10 +52,11 @@ CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり�
 > poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\videoframe_100000.jpg
 ```
 
-以下のようにすると対戦相手名を出力に含むようになります. 詳しくは [`specification.md`](./specification.md) をご覧ください.
+以下のようにすると出力される情報と順序をカスタマイズできます. 詳しくは [`specification.md`](./specification.md) をご覧ください.
 
 ```sh
-> poetry run taikoi2t -d .\students.csv --opponent .\Screenshot_2025.04.01_00.00.00.000.png
+> poetry run -- taikoi2t -d .\students.csv --columns PWOL PTEAM ONAME OWOL OTEAM -- .\Screenshot_2025.04.01_00.00.00.000.png
+Win	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	対戦相手	Lose	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ	ヒビキ
 ```
 
 例えば出力の TSV をクリップボードにコピーするには, PowerShell であれば `Set-Clipboard` にリダイレクトします.
@@ -111,7 +113,6 @@ torchvision = {source = "torch_source"}
 - 左側部隊 (プレイヤー側) の名前検出
 - `ホシノ（臨戦）` のタイプ判定
 - 大きくアスペクト比の狂った画像からの抽出
-- 列入れ替えやフォーマット文字列など, 出力形式のカスタマイズ
 - サーバとしての動作
 
 
