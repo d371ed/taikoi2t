@@ -244,7 +244,7 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 以下のような形式で出力されます. (実際にはインデント無しで1行です.)
 
 <details>
-<summary>出力例を表示</summary>
+<summary>出力例 (クリックで展開)</summary>
 
 ```json
 {

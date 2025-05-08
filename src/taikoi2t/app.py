@@ -390,7 +390,7 @@ def check_player_wins(source: Image, modal: BoundingBox) -> bool:
 
 def detect_opponent(
     reader: easyocr.Reader, grayscale: Image, modal: BoundingBox
-) -> str:
+) -> str | None:
     target = BoundingBox(
         left=modal.width * 5 // 6 + modal.left,
         top=modal.height // 7 + modal.top,
@@ -400,4 +400,4 @@ def detect_opponent(
     opponent_image: Image = cutout_image(grayscale, target)
 
     detected_chars: List[Character] = reader.readtext(opponent_image)  # type: ignore
-    return join_chars(detected_chars)
+    return join_chars(detected_chars) if len(detected_chars) > 0 else None
