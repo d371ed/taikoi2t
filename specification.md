@@ -57,25 +57,25 @@ options:
 - `IMAGE_NAME`, `INAME`: 画像パスのファイル名部分
 - `IMAGE_WIDTH`: 画像の幅 (pixel)
 - `IMAGE_HEIGHT`: 画像の高さ (pixel)
-- "PLAYER_WINS", "LEFT_WINS", "PWIN", "LWIN": プレイヤー側勝利で `TRUE`, 敗北かエラー時 `FALSE`
-- "PLAYER_WOL", "LEFT_WOL", "PWOL", "LWOL": プレイヤー側勝利で `Win`, 敗北かエラー時 `Lose`
-- "PLAYER_TEAM", "LEFT_TEAM", "PLAYER_MEMBERS", "LEFT_MEMBERS", "PTEAM", "LTEAM", "PMEMS", "LMEMS": プレイヤー側全員の生徒名 (6列)
-- "PLAYER_STRIKERS", "LEFT_STRIKERS", "PSTS", "LSTS": プレイヤー側ストライカー (4列)
-- "PLAYER_STRIKER_1", "LEFT_STRIKER_1", "PST1", "LST1", "P1", "L1": プレイヤー側ストライカーの1人目
+- `PLAYER_WINS`, `LEFT_WINS`, `PWIN`, `LWIN`: プレイヤー側勝利で `TRUE`, 敗北かエラー時 `FALSE`
+- `PLAYER_WOL`, `LEFT_WOL`, `PWOL`, `LWOL`: プレイヤー側勝利で `Win`, 敗北かエラー時 `Lose`
+- `PLAYER_TEAM`, `LEFT_TEAM`, `PLAYER_MEMBERS`, `LEFT_MEMBERS`, `PTEAM`, `LTEAM`, `PMEMS`, `LMEMS`: プレイヤー側全員の生徒名 (6列)
+- `PLAYER_STRIKERS`, `LEFT_STRIKERS`, `PSTS`, `LSTS`: プレイヤー側ストライカー (4列)
+- `PLAYER_STRIKER_1`, `LEFT_STRIKER_1`, `PST1`, `LST1`, `P1`, `L1`: プレイヤー側ストライカーの1人目
 - (上と同形式で 2～4 も有効)
-- "PLAYER_SPECIALS", "LEFT_SPECIALS", "PSPS", "LSPS": プレイヤー側スペシャル (2列)
-- "PLAYER_SPECIAL_1", "LEFT_SPECIAL_1", "PSP1", "LSP1", "P5", "L5": プレイヤー側スペシャルの1人目
-- "PLAYER_SPECIAL_2", "LEFT_SPECIAL_2", "PSP2", "LSP2", "P6", "L6": プレイヤー側スペシャルの2人目
-- "OPPONENT_WINS", "RIGHT_WINS", "OWIN", "RWIN": 相手側勝利で `TRUE`, 敗北かエラー時 `FALSE`
-- "OPPONENT_WOL", "RIGHT_WOL", "OWOL", "RWOL": 相手側勝利で `Win`, 敗北かエラー時 `Lose`
-- "OPPONENT_NAME", "OPPONENT_OWNER", "RIGHT_OWNER", "ONAME", "OOWN", "ROWN": 対戦相手の先生名
-- "OPPONENT_TEAM", "RIGHT_TEAM", "OPPONENT_MEMBERS", "RIGHT_MEMBERS", "OTEAM", "RTEAM", "OMEMS", "RMEMS": 相手側全員の生徒名 (6列)
-- "OPPONENT_STRIKERS", "RIGHT_STRIKERS", "OSTS", "RSTS": 相手側ストライカー (4列)
-- "OPPONENT_STRIKER_1", "RIGHT_STRIKER_1", "OST1", "RST1", "O1", "R1": 相手側ストライカーの1人目
+- `PLAYER_SPECIALS`, `LEFT_SPECIALS`, `PSPS`, `LSPS`: プレイヤー側スペシャル (2列)
+- `PLAYER_SPECIAL_1`, `LEFT_SPECIAL_1`, `PSP1`, `LSP1`, `P5`, `L5`: プレイヤー側スペシャルの1人目
+- `PLAYER_SPECIAL_2`, `LEFT_SPECIAL_2`, `PSP2`, `LSP2`, `P6`, `L6`: プレイヤー側スペシャルの2人目
+- `OPPONENT_WINS`, `RIGHT_WINS`, `OWIN`, `RWIN`: 相手側勝利で `TRUE`, 敗北かエラー時 `FALSE`
+- `OPPONENT_WOL`, `RIGHT_WOL`, `OWOL`, `RWOL`: 相手側勝利で `Win`, 敗北かエラー時 `Lose`
+- `OPPONENT_NAME`, `OPPONENT_OWNER`, `RIGHT_OWNER`, `ONAME`, `OOWN`, `ROWN`: 対戦相手の先生名
+- `OPPONENT_TEAM`, `RIGHT_TEAM`, `OPPONENT_MEMBERS`, `RIGHT_MEMBERS`, `OTEAM`, `RTEAM`, `OMEMS`, `RMEMS`: 相手側全員の生徒名 (6列)
+- `OPPONENT_STRIKERS`, `RIGHT_STRIKERS`, `OSTS`, `RSTS`: 相手側ストライカー (4列)
+- `OPPONENT_STRIKER_1`, `RIGHT_STRIKER_1`, `OST1`, `RST1`, `O1`, `R1`: 相手側ストライカーの1人目
 - (上と同形式で 2～4 も有効)
-- "OPPONENT_SPECIALS", "RIGHT_SPECIALS", "OSPS", "RSPS": 相手側スペシャル (2列)
-- "OPPONENT_SPECIAL_1", "RIGHT_SPECIAL_1", "OSP1", "RSP1", "O5", "R5": 相手側スペシャルの1人目
-- "OPPONENT_SPECIAL_2", "RIGHT_SPECIAL_2", "OSP2", "RSP2", "O6", "R6": 相手側スペシャルの2人目
+- `OPPONENT_SPECIALS`, `RIGHT_SPECIALS`, `OSPS`, `RSPS`: 相手側スペシャル (2列)
+- `OPPONENT_SPECIAL_1`, `RIGHT_SPECIAL_1`, `OSP1`, `RSP1`, `O5`, `R5`: 相手側スペシャルの1人目
+- `OPPONENT_SPECIAL_2`, `RIGHT_SPECIAL_2`, `OSP2`, `RSP2`, `O6`, `R6`: 相手側スペシャルの2人目
 </details>
 
 コマンドの途中で記述する場合, 入力画像パスと区別がつかなくなるため `--` を以下のように挿入してください.
