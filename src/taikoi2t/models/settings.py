@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Literal, Sequence, Set
 
-from taikoi2t.models.column import Column, Requirement
+from taikoi2t.models.column import ALL_REQUIREMENTS, Column, Requirement
 
 type OutputFormat = Literal["tsv", "csv", "json"]
 
@@ -17,8 +17,11 @@ class Settings:
 
     @cached_property
     def requirements(self) -> Set[Requirement]:
-        return set(
-            column.requirement
-            for column in self.columns
-            if column.requirement is not None
-        )
+        if self.output_format == "json":
+            return ALL_REQUIREMENTS
+        else:
+            return set(
+                column.requirement
+                for column in self.columns
+                if column.requirement is not None
+            )

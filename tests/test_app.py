@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import List, Tuple
 
@@ -38,3 +39,16 @@ def test_run(capsys: pytest.CaptureFixture[str]) -> None:
         captured = capsys.readouterr()
         assert captured.out == expected
         assert captured.err == ""
+
+
+def test_run_json(capsys: pytest.CaptureFixture[str]) -> None:
+    if not Path("./tests/images").exists():
+        return  # skip
+
+    run("app -d ./students.csv --json ./tests/images/0000.jpg".split())
+    captured = capsys.readouterr()
+    out_json = json.loads(captured.out)
+    assert out_json["matches"][0]["player"]["wins"] is True
+    assert out_json["matches"][0]["player"]["strikers"]["striker1"]["name"] == "ホシノ"
+    assert out_json["matches"][0]["opponent"]["owner"] != "null"
+    assert captured.err == ""

@@ -5,14 +5,16 @@ from taikoi2t.implements.column import DEFAULT_COLUMN_KEYS, OPPONENT_COLUMN_KEYS
 from taikoi2t.implements.settings import new_settings_from
 from taikoi2t.models.args import VERBOSE_SILENT, Args
 from taikoi2t.models.column import Column
-from taikoi2t.models.settings import Settings
+from taikoi2t.models.settings import OutputFormat, Settings
 
 
 def test_requirements() -> None:
-    def new_settings(columns: Sequence[Column]) -> Settings:
+    def new_settings(
+        columns: Sequence[Column], output_format: OutputFormat = "tsv"
+    ) -> Settings:
         return Settings(
             columns=columns,
-            output_format="tsv",
+            output_format=output_format,
             alias=True,
             sp_sort=True,
             verbose=VERBOSE_SILENT,
@@ -35,6 +37,10 @@ def test_requirements() -> None:
             Column(["EEE"], "win_or_lose", lambda _: []),
         ]
     ).requirements == set(["win_or_lose", "opponent"])
+
+    assert new_settings(
+        [Column(["AAA"], "students", lambda _: [])], output_format="json"
+    ).requirements == set(["students", "win_or_lose", "opponent"])
 
 
 def test_new_settings_from_mapping_bools() -> None:
