@@ -4,8 +4,8 @@
 
 ```sh
 > poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\Screenshot_2025.04.01_01.00.00.000.png
-TRUE	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ		ヒビキ
-FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホシノ	シロコ＊	マリナ	レイサ	水シロコ		ヒビキ
+TRUE	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ	ヒビキ
+FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホシノ	シロコ＊	マリナ	レイサ	水シロコ	ヒビキ
 ```
 
 出力は Google スプレッドシートへ貼り付けることを想定し, デフォルトでは TSV になります.
@@ -56,7 +56,7 @@ CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり�
 
 ```sh
 > poetry run -- taikoi2t -d .\students.csv --column PNAME PWOL PTEAM ONAME OWOL OTEAM -- .\Screenshot_2025.04.01_00.00.00.000.png
-プレイヤー	Win	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	対戦相手	Lose	水ハナコ	マリナ		シロコ＊	ホシノ	水シロコ	ヒビキ
+プレイヤー	Win	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	対戦相手	Lose	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ	ヒビキ
 ```
 
 例えば出力の TSV をクリップボードにコピーするには, PowerShell であれば `Set-Clipboard` にリダイレクトします.
