@@ -77,6 +77,7 @@ options:
 - `OPPONENT_SPECIALS`, `RIGHT_SPECIALS`, `OSPS`, `RSPS`: 相手側スペシャル (2列)
 - `OPPONENT_SPECIAL_1`, `RIGHT_SPECIAL_1`, `OSP1`, `RSP1`, `O5`, `R5`: 相手側スペシャルの1人目
 - `OPPONENT_SPECIAL_2`, `RIGHT_SPECIAL_2`, `OSP2`, `RSP2`, `O6`, `R6`: 相手側スペシャルの2人目
+- `BLANK`, `BL`: 空の列
 </details>
 
 コマンドの途中で記述する場合, 入力画像パスと区別がつかなくなるため `--` を以下のように挿入してください.

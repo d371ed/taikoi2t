@@ -154,6 +154,7 @@ COLUMNS: Sequence[Column] = [
         "students",
         lambda m: [m.opponent.specials.special2],
     ),
+    Column(["BLANK", "BL"], None, lambda _: [""]),
 ]
 
 
