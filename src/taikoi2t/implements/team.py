@@ -5,15 +5,15 @@ from taikoi2t.implements.student import new_empty_student, new_error_student
 from taikoi2t.models.student import ERROR_STUDENT_NAME, Student
 from taikoi2t.models.team import Specials, Strikers, Team
 
-STUDENT_COUNT_IN_TEAM: int = 6
+__STUDENT_COUNT_IN_TEAM: int = 6
 
 
 def new_team_from(students: Sequence[Student]) -> Team:
     ss: Sequence[Student]
-    if len(students) < STUDENT_COUNT_IN_TEAM:
+    if len(students) < __STUDENT_COUNT_IN_TEAM:
         fillers = map(
             lambda _: new_empty_student(),
-            range(STUDENT_COUNT_IN_TEAM - len(students)),
+            range(__STUDENT_COUNT_IN_TEAM - len(students)),
         )
         ss = list(chain(students, fillers))
     else:
@@ -47,15 +47,15 @@ def sort_specials(specials: Specials) -> Specials:
         and sp2_is_valid
         and specials.special1.index > specials.special2.index
     ):
-        return Specials(specials.special2, specials.special1)
+        return specials.swapped()
     elif not sp1_is_valid and sp2_is_valid:
-        return Specials(specials.special2, specials.special1)
+        return specials.swapped()
     elif (
         not sp1_is_valid
         and not sp2_is_valid
         and specials.special1.name != ERROR_STUDENT_NAME
     ):
         # sp1 is empty (maybe) -> right
-        return Specials(specials.special2, specials.special1)
+        return specials.swapped()
     else:
         return specials

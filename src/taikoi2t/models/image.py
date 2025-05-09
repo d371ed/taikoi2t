@@ -22,6 +22,14 @@ class BoundingBox:
         return abs(self.bottom - self.top)
 
 
+@dataclass(frozen=True)
+class RelativeBox:
+    left: float
+    top: float
+    right: float
+    bottom: float
+
+
 @dataclass
 class ImageMeta:
     path: str

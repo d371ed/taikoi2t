@@ -59,6 +59,7 @@ options:
 - `IMAGE_HEIGHT`: 画像の高さ (pixel)
 - `PLAYER_WINS`, `LEFT_WINS`, `PWIN`, `LWIN`: プレイヤー側勝利で `TRUE`, 敗北かエラー時 `FALSE`
 - `PLAYER_WOL`, `LEFT_WOL`, `PWOL`, `LWOL`: プレイヤー側勝利で `Win`, 敗北かエラー時 `Lose`
+- `PLAYER_NAME`, `PLAYER_OWNER`, `LEFT_OWNER`, `PNAME`, `POWN`, `LOWN`: プレイヤーの先生名
 - `PLAYER_TEAM`, `LEFT_TEAM`, `PLAYER_MEMBERS`, `LEFT_MEMBERS`, `PTEAM`, `LTEAM`, `PMEMS`, `LMEMS`: プレイヤー側全員の生徒名 (6列)
 - `PLAYER_STRIKERS`, `LEFT_STRIKERS`, `PSTS`, `LSTS`: プレイヤー側ストライカー (4列)
 - `PLAYER_STRIKER_1`, `LEFT_STRIKER_1`, `PST1`, `LST1`, `P1`, `L1`: プレイヤー側ストライカーの1人目
@@ -273,7 +274,7 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
       },
       "player": {
         "wins": false,
-        "owner": null,
+        "owner": "プレイヤー",
         "strikers": {
           "striker1": {
             "index": 162,

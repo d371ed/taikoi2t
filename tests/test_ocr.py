@@ -4,6 +4,10 @@ from taikoi2t.implements.ocr import join_chars
 from taikoi2t.models.ocr import Character
 
 
+def test_read_text_from_roi() -> None:
+    pass  # TODO
+
+
 def test_join_chars() -> None:
     chars1: List[Character] = [
         ([(23, 10), (149, 10), (149, 55), (23, 55)], "シロコ", 0.9999086002751579),

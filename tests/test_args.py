@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from taikoi2t.implements.args import parse_args, validate_args
+from taikoi2t.application.args import parse_args, validate_args
 from taikoi2t.models.args import (
     VERBOSE_ERROR,
     VERBOSE_IMAGE,

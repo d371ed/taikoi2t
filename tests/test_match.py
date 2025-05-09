@@ -1,7 +1,7 @@
 import json
 from typing import Sequence
 
-from taikoi2t.implements.column import COLUMN_DICTIONARY, DEFAULT_COLUMN_KEYS
+from taikoi2t.application.column import COLUMN_DICTIONARY, DEFAULT_COLUMN_KEYS
 from taikoi2t.implements.match import render_match
 from taikoi2t.models.args import VERBOSE_SILENT
 from taikoi2t.models.column import Column

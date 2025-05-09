@@ -4,8 +4,8 @@
 
 ```sh
 > poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\Screenshot_2025.04.01_01.00.00.000.png
-TRUE	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ	ヒビキ
-FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホシノ	シロコ＊	マリナ	レイサ	水シロコ	ヒビキ
+TRUE	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ		ヒビキ
+FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホシノ	シロコ＊	マリナ	レイサ	水シロコ		ヒビキ
 ```
 
 出力は Google スプレッドシートへ貼り付けることを想定し, デフォルトでは TSV になります.
@@ -55,8 +55,8 @@ CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり�
 以下のようにすると出力される情報と順序をカスタマイズできます. 詳しくは [`specification.md`](./specification.md) をご覧ください.
 
 ```sh
-> poetry run -- taikoi2t -d .\students.csv --columns PWOL PTEAM ONAME OWOL OTEAM -- .\Screenshot_2025.04.01_00.00.00.000.png
-Win	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	対戦相手	Lose	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ	ヒビキ
+> poetry run -- taikoi2t -d .\students.csv --column PNAME PWOL PTEAM ONAME OWOL OTEAM -- .\Screenshot_2025.04.01_00.00.00.000.png
+プレイヤー	Win	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	対戦相手	Lose	水ハナコ	マリナ		シロコ＊	ホシノ	水シロコ	ヒビキ
 ```
 
 例えば出力の TSV をクリップボードにコピーするには, PowerShell であれば `Set-Clipboard` にリダイレクトします.
@@ -110,7 +110,6 @@ torchvision = {source = "torch_source"}
 
 - 各生徒のダメージ数値の抽出
 - アイコンによる攻撃側/防御側の判定
-- 左側部隊 (プレイヤー側) の名前検出
 - `ホシノ（臨戦）` のタイプ判定
 - 大きくアスペクト比の狂った画像からの抽出
 - サーバとしての動作

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Sequence
 
 from taikoi2t import TAIKOI2T_VERSION
-from taikoi2t.implements.column import COLUMN_DICTIONARY
+from taikoi2t.application.column import COLUMN_DICTIONARY
 from taikoi2t.models.args import VERBOSE_ERROR, VERBOSE_SILENT, Args
 
 

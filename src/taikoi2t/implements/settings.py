@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from taikoi2t.implements.column import (
+from taikoi2t.application.column import (
     COLUMN_DICTIONARY,
     DEFAULT_COLUMN_KEYS,
     OPPONENT_COLUMN_KEYS,

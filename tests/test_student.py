@@ -1,5 +1,5 @@
+from taikoi2t.application.student import StudentDictionary
 from taikoi2t.implements.student import (
-    StudentDictionary,
     normalize_student_name,
     remove_diacritics,
 )

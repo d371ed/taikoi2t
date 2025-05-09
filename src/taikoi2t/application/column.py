@@ -26,11 +26,11 @@ COLUMNS: Sequence[Column] = [
         "win_or_lose",
         lambda m: ["Win" if m.player.wins else "Lose"],
     ),
-    # Column(
-    #     ["PLAYER_NAME", "PLAYER_OWNER", "LEFT_OWNER", "PNAME", "POWN", "LOWN"],
-    #     ["player"],
-    #     lambda m: ["Error"] if m.player.owner is None else [m.player.owner],
-    # ),
+    Column(
+        ["PLAYER_NAME", "PLAYER_OWNER", "LEFT_OWNER", "PNAME", "POWN", "LOWN"],
+        "player",
+        lambda m: ["Error"] if m.player.owner is None else [m.player.owner],
+    ),
     Column(
         [
             "PLAYER_TEAM",

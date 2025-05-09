@@ -8,7 +8,16 @@ from cv2 import (
     warpAffine,
 )
 
-from taikoi2t.models.image import BoundingBox, Image
+from taikoi2t.models.image import BoundingBox, Image, RelativeBox
+
+
+def get_roi_bbox(source: BoundingBox, relative_roi: RelativeBox) -> BoundingBox:
+    return BoundingBox(
+        left=round(source.left + source.width * relative_roi.left),
+        top=round(source.top + source.height * relative_roi.top),
+        right=round(source.left + source.width * relative_roi.right),
+        bottom=round(source.top + source.height * relative_roi.bottom),
+    )
 
 
 def resize_to(source: Image, width: int) -> Image:
@@ -25,8 +34,8 @@ def skew(source: Image, degree: float) -> Image:
     return warpAffine(source, mat, (int(width + height * tan_theta), height))
 
 
-def cutout_image(image: Image, area: BoundingBox) -> Image:
-    return image[area.top : area.bottom, area.left : area.right]
+def crop(image: Image, bbox: BoundingBox) -> Image:
+    return image[bbox.top : bbox.bottom, bbox.left : bbox.right]
 
 
 #      ___

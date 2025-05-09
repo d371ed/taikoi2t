@@ -1,6 +1,6 @@
 from itertools import chain
 
-from taikoi2t.implements.column import COLUMN_DICTIONARY, COLUMNS
+from taikoi2t.application.column import COLUMN_DICTIONARY, COLUMNS
 
 
 def test_COLUMN_DICTIONARY_key_duplication() -> None:

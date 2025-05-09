@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Sequence
 
-from taikoi2t.implements.column import DEFAULT_COLUMN_KEYS, OPPONENT_COLUMN_KEYS
+from taikoi2t.application.column import DEFAULT_COLUMN_KEYS, OPPONENT_COLUMN_KEYS
 from taikoi2t.implements.settings import new_settings_from
 from taikoi2t.models.args import VERBOSE_SILENT, Args
 from taikoi2t.models.column import Column
@@ -38,9 +38,10 @@ def test_requirements() -> None:
         ]
     ).requirements == set(["win_or_lose", "opponent"])
 
+    # ignores column's requirements if JSON
     assert new_settings(
         [Column(["AAA"], "students", lambda _: [])], output_format="json"
-    ).requirements == set(["students", "win_or_lose", "opponent"])
+    ).requirements == set(["students", "win_or_lose", "player", "opponent"])
 
 
 def test_new_settings_from_mapping_bools() -> None:

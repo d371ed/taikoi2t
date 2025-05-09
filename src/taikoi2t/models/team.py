@@ -20,6 +20,9 @@ class Specials:
     special1: Student
     special2: Student
 
+    def swapped(self) -> "Specials":
+        return Specials(self.special2, self.special1)
+
     def list(self) -> List[Student]:
         return [self.special1, self.special2]
 
