@@ -83,7 +83,7 @@ options:
 コマンドの途中で記述する場合, 入力画像パスと区別がつかなくなるため `--` を以下のように挿入してください.
 
 ```sh
-> poetry run -- taikoi2t -d .\students.csv -c PWIN PTEAM OWIN OTEAM -- .\image1.png .\image2.png
+poetry run -- taikoi2t -d .\students.csv -c PWIN PTEAM OWIN OTEAM -- .\image1.png .\image2.png
 ```
 
 このとき `poetry run` の後ろにも `--` を入れるようにしてください. (Poetry 側の仕様です.)

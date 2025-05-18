@@ -35,8 +35,8 @@ FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホ�
 事前に [Python](https://www.python.org/) 3.13 と [Poetry](https://python-poetry.org/) のインストールが必要です.
 
 ```sh
-> cd path\to\taikoi2t\
-> poetry install
+cd path\to\taikoi2t\
+poetry install
 ```
 
 CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり容量の大きいダウンロードが発生するはずです.
@@ -49,20 +49,23 @@ CUDA 版 [PyTorch](https://pytorch.org/) を利用しているため, かなり�
 `poetry run taikoi2t -d (生徒辞書 CSV へのパス)` に続き抽出対象の画像ファイル (PNG, JPEG 等) のパスを渡してください.
 
 ```sh
-> poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\videoframe_100000.jpg
+poetry run taikoi2t -d .\students.csv .\Screenshot_2025.04.01_00.00.00.000.png .\videoframe_100000.jpg
 ```
 
 以下のようにすると出力される情報と順序をカスタマイズできます. 詳しくは [`specification.md`](./specification.md) をご覧ください.
 
 ```sh
-> poetry run -- taikoi2t -d .\students.csv --column PNAME PWOL PTEAM ONAME OWOL OTEAM -- .\Screenshot_2025.04.01_00.00.00.000.png
+poetry run -- taikoi2t -d .\students.csv --column PNAME PWOL PTEAM ONAME OWOL OTEAM -- .\Screenshot_2025.04.01_00.00.00.000.png
+```
+
+```tsv:output
 プレイヤー	Win	ホシノ	バネル	マリナ	アジュリ	水シロコ	ヒビキ	対戦相手	Lose	水ハナコ	マリナ	シロコ＊	ホシノ	水シロコ	ヒビキ
 ```
 
 例えば出力の TSV をクリップボードにコピーするには, PowerShell であれば `Set-Clipboard` にリダイレクトします.
 
 ```powershell
-> poetry run taikoi2t -d .\students.csv .\videoframe_100000.jpg | Set-Clipboard
+poetry run taikoi2t -d .\students.csv .\videoframe_100000.jpg | Set-Clipboard
 ```
 
 新規生徒追加時や, 出力される別名を変更したい場合は辞書 [`students.csv`](./students.csv) の編集が必要になります. [生徒名辞書](./specification.md#生徒名辞書) をご覧ください.
