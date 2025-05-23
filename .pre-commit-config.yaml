@@ -1,0 +1,15 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+-   repo: local
+    hooks:
+    -   id: update-project-version
+        name: updates project version
+        language: system
+        entry: poetry run python ./tools/update_project_version.py
+        pass_filenames: false
+        files: src\/taikoi2t\/__init__\.py
+        stages: [pre-commit, pre-push, manual]
