@@ -1,9 +1,10 @@
 # 仕様
 
 ```
-usage: taikoi2t [-h] [--version] -d DICTIONARY [--opponent | -c COLUMNS [COLUMNS ...]] [--csv | --json] [--no-alias] [--no-sp-sort]
-                                                                   [-v]
-                                                                   files [files ...]
+usage: taikoi2t
+       [-h] [--version] -d DICTIONARY [--opponent | -c COLUMNS [COLUMNS ...]]
+       [--csv | --json] [--no-alias] [--no-sp-sort] [-v]
+       files [files ...]
 
 positional arguments:
   files                 target images
@@ -20,8 +21,11 @@ options:
   --json                change output to JSON (default: TSV)
   --no-alias            turn off alias mapping for student's name
   --no-sp-sort          turn off sorting specials
-  -v, --verbose         print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)
+  -v, --verbose         print messages and show images for debug (default:
+                        silent, -v: error, -vv: print, -vvv: image)
 ```
+
+<!-- MARK for update_usage.py -->
 
 
 ## コマンドライン引数

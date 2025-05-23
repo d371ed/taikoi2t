@@ -12,4 +12,11 @@ repos:
         entry: poetry run python ./tools/update_project_version.py
         pass_filenames: false
         files: src\/taikoi2t\/__init__\.py
-        stages: [pre-commit, pre-push, manual]
+        stages: [pre-commit, manual]
+    -   id: update-usage
+        name: updates the usage in specification.md
+        language: system
+        entry: poetry run python ./tools/update_usage.py
+        pass_filenames: false
+        files: src\/taikoi2t\/(application|implements|models)\/args\.py
+        stages: [pre-commit, manual]
