@@ -1,12 +1,17 @@
 import sys
 from datetime import datetime
-from typing import Callable, List, Tuple
+from typing import Callable, Iterable, List, Tuple
 
 import cv2
 import easyocr  # type: ignore
 
 from taikoi2t.application.modal import find_modal
-from taikoi2t.application.student import StudentDictionary, extract_student_names
+from taikoi2t.application.student import (
+    StudentDictionary,
+    preprocess_students_for_ocr,
+    recognize_student,
+    recognize_student_by_character,
+)
 from taikoi2t.application.wins import check_player_wins
 from taikoi2t.implements.image import get_roi_bbox, show_image
 from taikoi2t.implements.ocr import read_text_from_roi
@@ -30,8 +35,7 @@ def extract_match_result(
     reader: easyocr.Reader,
     settings: Settings,
 ) -> MatchResult | None:
-    # for OCR
-    grayscale: Image = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
+    grayscale: Image = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)  # for OCR
 
     modal = find_modal(grayscale, settings.verbose)
     if modal is None:
@@ -56,29 +60,30 @@ def extract_match_result(
     opponent_team: Team
 
     def process_students() -> Tuple[Team, Team] | None:
-        extracted_student_names = extract_student_names(
-            reader,
-            grayscale,
-            modal,
-            dictionary.allow_char_list,
-            settings.verbose,
-        )
+        preprocessed_images = preprocess_students_for_ocr(grayscale, modal)
 
-        if len(extracted_student_names) < 12:
-            if settings.verbose >= VERBOSE_ERROR:
-                print(
-                    f"ERROR: Student's names extraction error. len: {len(extracted_student_names)}",
-                    file=sys.stderr,
-                )
-            return None
-
-        # matching student's names with the dictionary
-        students: List[Student] = [
-            dictionary.match(detected, settings.verbose)
-            for detected in extracted_student_names
+        first_recognized_students: Iterable[Student] = [
+            recognize_student(reader, dictionary, image, settings.verbose)
+            for image in preprocessed_images
         ]
 
-        return new_team_from(students[0:6]), new_team_from(students[6:12])
+        second_recognized_students: List[Student] = []
+        for index, (image, first_recognized) in enumerate(
+            zip(preprocessed_images, first_recognized_students)
+        ):
+            second_recognized: Student = first_recognized
+            if first_recognized.is_error:
+                if settings.verbose >= VERBOSE_PRINT:
+                    print(f"<re-recognize> at {index}")
+                second_recognized = recognize_student_by_character(
+                    reader, dictionary, image, settings.verbose
+                )
+            second_recognized_students.append(second_recognized)
+
+        return (
+            new_team_from(second_recognized_students[0:6]),
+            new_team_from(second_recognized_students[6:12]),
+        )
 
     player_team, opponent_team = __run_process(
         process_students, "students", image_meta, settings

@@ -1,4 +1,4 @@
-from taikoi2t.application.student import StudentDictionary
+from taikoi2t.application.student import STUDENTS_LEFT_XS, StudentDictionary
 from taikoi2t.implements.student import (
     normalize_student_name,
     remove_diacritics,
@@ -50,3 +50,7 @@ def test_remove_diacritics() -> None:
 
     res3 = remove_diacritics("ノア（パジャマ）")
     assert res3 == "ノア（ハシャマ）"
+
+
+def test_STUDENTS_LEFT_XS() -> None:
+    assert len(list(STUDENTS_LEFT_XS)) == 12

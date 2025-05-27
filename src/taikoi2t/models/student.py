@@ -10,3 +10,7 @@ class Student:
     index: int
     name: str
     alias: Optional[str]
+
+    @property
+    def is_error(self) -> bool:
+        return self.name == ERROR_STUDENT_NAME

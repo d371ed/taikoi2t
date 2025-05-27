@@ -54,6 +54,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         sys.exit(1)
 
     student_dictionary = StudentDictionary(student_alias_pairs)
+    student_dictionary.validate(settings.verbose)
 
     if settings.verbose >= VERBOSE_PRINT:
         print("allow_char_list: " + student_dictionary.allow_char_list)

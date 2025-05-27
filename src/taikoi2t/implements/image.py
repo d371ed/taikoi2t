@@ -2,11 +2,6 @@ import math
 
 import cv2
 import numpy
-from cv2 import (
-    LUT,  # type: ignore
-    resize,
-    warpAffine,
-)
 
 from taikoi2t.models.image import BoundingBox, Image, RelativeBox
 
@@ -22,7 +17,7 @@ def get_roi_bbox(source: BoundingBox, relative_roi: RelativeBox) -> BoundingBox:
 
 def resize_to(source: Image, width: int) -> Image:
     scale: float = width / source.shape[1]
-    return resize(
+    return cv2.resize(
         source, (width, int(source.shape[0] * scale)), interpolation=cv2.INTER_LANCZOS4
     )
 
@@ -31,7 +26,20 @@ def skew(source: Image, degree: float) -> Image:
     tan_theta: float = math.tan(math.radians(degree))
     mat = numpy.array([[1, tan_theta, 0], [0, 1, 0]], dtype=numpy.float64)
     height, width = source.shape[:2]
-    return warpAffine(source, mat, (int(width + height * tan_theta), height))
+    return cv2.warpAffine(source, mat, (int(width + height * tan_theta), height))
+
+
+def smooth(source: Image, kernel_size: int) -> Image:
+    if kernel_size <= 0:
+        kernel_size = 1
+    if kernel_size % 2 == 0:
+        kernel_size += 1
+    return cv2.GaussianBlur(source, (kernel_size, kernel_size), 0)
+
+
+def sharpen(source: Image, k: float) -> Image:
+    laplacian: Image = cv2.Laplacian(source, cv2.CV_64F)  # type: ignore
+    return cv2.convertScaleAbs(source - k * laplacian)  # type: ignore
 
 
 def crop(image: Image, bbox: BoundingBox) -> Image:
@@ -50,7 +58,7 @@ def level_contrast(image: Image, x0: int, x1: int) -> Image:
     bias: float = -x0 * gain
     x = numpy.arange(256, dtype=numpy.uint8)
     y = numpy.clip(x * gain + bias, 0, 255)
-    return LUT(image, y).astype(numpy.uint8)
+    return cv2.LUT(image, y).astype(numpy.uint8)  # type: ignore
 
 
 # for debug

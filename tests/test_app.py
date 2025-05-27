@@ -162,7 +162,3 @@ def new_expected_result_from(row: Sequence[str]) -> ExpectedResult:
         o5=row[15],
         o6=row[16],
     )
-
-
-def test_extract_student_names() -> None:
-    pass  # TODO
