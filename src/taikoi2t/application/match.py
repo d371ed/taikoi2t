@@ -1,4 +1,4 @@
-import sys
+import logging
 from datetime import datetime
 from typing import Callable, Iterable, List, Tuple
 
@@ -17,12 +17,14 @@ from taikoi2t.implements.image import get_roi_bbox, show_image
 from taikoi2t.implements.ocr import read_text_from_roi
 from taikoi2t.implements.settings import Settings
 from taikoi2t.implements.team import new_team_from, sort_specials
-from taikoi2t.models.args import VERBOSE_ERROR, VERBOSE_IMAGE, VERBOSE_PRINT
+from taikoi2t.models.args import VERBOSE_IMAGE, VERBOSE_PRINT
 from taikoi2t.models.column import Requirement
 from taikoi2t.models.image import Image, ImageMeta, RelativeBox
 from taikoi2t.models.match import MatchResult
 from taikoi2t.models.student import Student
 from taikoi2t.models.team import Team
+
+logger: logging.Logger = logging.getLogger("taikoi2t.match")
 
 __PLAYER_NAME_RELATIVE = RelativeBox(left=6 / 19, top=1 / 7, right=1 / 2, bottom=1 / 5)
 __OPPONENT_NAME_RELATIVE = RelativeBox(left=5 / 6, top=1 / 7, right=1, bottom=1 / 5)
@@ -39,11 +41,7 @@ def extract_match_result(
 
     modal = find_modal(grayscale, settings.verbose)
     if modal is None:
-        if settings.verbose >= VERBOSE_ERROR:
-            print(
-                f"ERROR: Cannot detect any result-box in {image_meta.path}",
-                file=sys.stderr,
-            )
+        logger.error(f"Cannot detect any result-box in {image_meta.path}")
         return None
     if settings.verbose >= VERBOSE_IMAGE:
         show_image(
@@ -73,8 +71,9 @@ def extract_match_result(
         ):
             second_recognized: Student = first_recognized
             if first_recognized.is_error:
-                if settings.verbose >= VERBOSE_PRINT:
-                    print(f"<re-recognize> at {index}")
+                logger.info(
+                    f"!! Recognition error at {index}. Retrying it by single character."
+                )
                 second_recognized = recognize_student_by_character(
                     reader, dictionary, image, settings.verbose
                 )
@@ -93,11 +92,9 @@ def extract_match_result(
         # overwrite specials
         player_team.specials = sort_specials(player_team.specials)
         opponent_team.specials = sort_specials(opponent_team.specials)
-        if settings.verbose >= VERBOSE_PRINT:
-            print(f"--- DONE sp_sort ({image_meta.path}) ---")
+        logger.info(f"--- DONE sp_sort ({image_meta.path}) ---")
     else:
-        if settings.verbose >= VERBOSE_PRINT:
-            print(f"--- SKIP sp_sort ({image_meta.path}) ---")
+        logger.info(f"--- SKIP sp_sort ({image_meta.path}) ---")
 
     # passes colored source image because checking win or lose uses mean saturation of the region
     player_wins = __run_process(
@@ -146,19 +143,15 @@ def __run_process[Ret](
 ) -> Ret | None:
     if requirement in settings.requirements:
         starts_at = datetime.now()
-        if settings.verbose >= VERBOSE_PRINT:
-            print(f"--- START {requirement} ({image_meta.path}) ---")
+        logger.info(f"--- START {requirement} ({image_meta.path}) ---")
 
         result: Ret = process()
 
-        if settings.verbose >= VERBOSE_PRINT:
-            print(f"--- END {requirement} ({image_meta.path}) ---")
-            ends_at = datetime.now()
-            print(
-                f"    start: {starts_at}, end: {ends_at}, elapsed: {ends_at - starts_at}"
-            )
+        logger.info(
+            f"--- END {requirement} ({image_meta.path}); elapsed: {datetime.now() - starts_at} ---"
+        )
         return result
     else:
         if settings.verbose >= VERBOSE_PRINT:
-            print(f"--- SKIP {requirement} ({image_meta.path}) ---")
+            logger.info(f"--- SKIP {requirement} ({image_meta.path}) ---")
         return None

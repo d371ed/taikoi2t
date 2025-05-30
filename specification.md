@@ -3,7 +3,7 @@
 ```
 usage: taikoi2t
        [-h] [--version] -d DICTIONARY [--opponent | -c COLUMNS [COLUMNS ...]]
-       [--csv | --json] [--no-alias] [--no-sp-sort] [-v]
+       [--csv | --json] [--no-alias] [--no-sp-sort] [-v] [--logfile LOGFILE]
        files [files ...]
 
 positional arguments:
@@ -23,6 +23,7 @@ options:
   --no-sp-sort          turn off sorting specials
   -v, --verbose         print messages and show images for debug (default:
                         silent, -v: error, -vv: print, -vvv: image)
+  --logfile LOGFILE     output logs to this path (default: disabled)
 ```
 
 <!-- MARK for update_usage.py -->
@@ -30,7 +31,7 @@ options:
 
 ## コマンドライン引数
 
-### `-d, --dictionary`
+### `-d, --dictionary DICTIONARY`
 
 必須.
 生徒名と別名を記述した辞書ファイルを指定.
@@ -47,7 +48,7 @@ options:
 小書き文字 (っ, ゃ, ぃ 等) や濁音/半濁音 (が, ぱ 等), 日本語外の漢字は検出精度が低い傾向にあります.
 
 
-### `-c, --columns`
+### `-c, --columns COLUMNS [COLUMNS ...]`
 
 任意.
 出力列を後続の引数で設定.
@@ -132,33 +133,40 @@ TSV と同様ヘッダ行はありません.
 任意.
 デバッグ用の出力モードへ切り替え.
 
+出力先は stderr です.
+後述の `--logfile` の出力へは影響を与えません.
+
 
 #### デフォルト (指定なし)
 
-Silent. 通常の解析結果を返すモード.
+Silent. 致命的なエラーを除き出力をしないモード. (CRITICAL 相当)
 
-致命的なエラーを除き stderr へも出力を行いません.
-
-画像単位でエラーがあった場合, 実行を継続しつつ stdout へ文字列部分がすべて `Error` の行を出力します.
+画像単位でリザルトウィンドウの認識失敗などのエラーがあった場合, 実行を継続しつつ stdout へ文字列部分がすべて `Error` の行を出力します.
 
 
 #### `-v` または `--verbose`
 
-Error. エラーと警告を stderr へ出力するモード.
+Error. エラーと警告を出力するモード. (WARNING 相当)
 
 画像単位でエラーがあった場合に実行は継続されますが, stderr へエラーを出力します. Silent 時と同様に stdout へのエラー行出力もおこなわれます.
 
 
 #### `-vv`
 
-Print. stdout へデバッグ用の情報を詳細に出力するモード.
-
-結果の出力形式は TSV / CSV ではなくなります.
+Print. デバッグ用の情報を詳細に出力するモード. (DEBUG 相当)
 
 
 #### `-vvv`
 
 Image. Print の内容に加え `cv2.imshow` で画像解析の途中経過を表示するモード.
+
+
+### `--logfile LOGFILE`
+
+任意.
+指定したパスのファイルへ実行ログを出力.
+
+`--verbose` オプションは影響を与えず, DEBUG レベル相当のすべての情報が出力されます.
 
 
 ### `-h, --help`

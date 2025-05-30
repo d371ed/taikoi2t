@@ -120,5 +120,6 @@ def __new_args(
         no_alias=no_alias,
         no_sp_sort=no_sp_sort,
         verbose=VERBOSE_SILENT,
+        logfile=None,
         files=[],
     )

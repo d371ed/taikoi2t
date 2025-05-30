@@ -1,4 +1,8 @@
-from taikoi2t.application.student import STUDENTS_LEFT_XS, StudentDictionary
+import logging
+
+import pytest
+
+from taikoi2t.application.student import STUDENTS_LEFT_XS, StudentDictionaryImpl
 from taikoi2t.implements.student import (
     normalize_student_name,
     remove_diacritics,
@@ -7,7 +11,7 @@ from taikoi2t.models.student import Student
 
 
 def test_StudentDictionary_match() -> None:
-    dic = StudentDictionary(
+    dic = StudentDictionaryImpl(
         [
             ("シロコ（水着）", "水シロコ"),
             ("ホシノ", ""),
@@ -27,13 +31,46 @@ def test_StudentDictionary_match() -> None:
     assert dic.match("シロコ") == Student(5, "シロコ", None)
     assert dic.match("シロコ（水着）") == Student(0, "シロコ（水着）", "水シロコ")
     assert dic.match("シロコ（水着") == Student(0, "シロコ（水着）", "水シロコ")
-    # assert dic.match("シロコ水者") == Student(0, "シロコ（水着）", "水シロコ") # cannot match this correctly
+    assert dic.match("シロコ水者") == Student(
+        -1, "Error", None
+    )  # cannot match this correctly
     assert dic.match("シロコ＊テラー") == Student(3, "シロコ＊テラー", "シロコ＊")
     assert dic.match("シロコミテラー") == Student(3, "シロコ＊テラー", "シロコ＊")
     assert dic.match("ネル（ハニーカール）") == Student(
         6, "ネル（バニーガール）", "バネル"
     )
     assert dic.match("ナキサ") == Student(10, "ナギサ", None)
+
+
+def test_StudentDictionary_validate_valid(caplog: pytest.LogCaptureFixture) -> None:
+    dic = StudentDictionaryImpl(
+        [
+            ("シロコ（水着）", "水シロコ"),
+            ("ホシノ", ""),
+        ]
+    )
+    assert dic.validate() is True
+    assert caplog.record_tuples == []
+
+
+def test_StudentDictionary_validate_duplicated_names(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    dic = StudentDictionaryImpl(
+        [
+            ("シロコ（水着）", "水シロコ"),
+            ("ホシノ", ""),
+            ("シロコ（水着）", ""),
+        ]
+    )
+    assert dic.validate() is True  # warning is valid
+    assert caplog.record_tuples == [
+        (
+            "taikoi2t.student.StudentDictionary",
+            logging.WARNING,
+            "Duplicated names in student's dictionary ['シロコ（水着）']",
+        )
+    ]
 
 
 def test_normalize_student_name() -> None:

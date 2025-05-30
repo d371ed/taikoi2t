@@ -1,19 +1,17 @@
 import argparse
-import sys
+import logging
 from pathlib import Path
-from typing import List, Sequence
+from typing import Sequence
 
 from taikoi2t import TAIKOI2T_VERSION
 from taikoi2t.application.column import COLUMN_DICTIONARY
-from taikoi2t.models.args import VERBOSE_ERROR, VERBOSE_SILENT, Args
+from taikoi2t.models.args import VERBOSE_SILENT, Args
+
+logger: logging.Logger = logging.getLogger("taikoi2t.args")
 
 
 def parse_args(args: Sequence[str]) -> Args:
-    if len(args) == 0:
-        print("FATAL: args is empty", file=sys.stderr)
-        sys.exit(1)
-
-    arg_parser = argparse.ArgumentParser(args[0])
+    arg_parser = argparse.ArgumentParser(args[0] if len(args) > 0 else None)
     arg_parser.add_argument(
         "--version", action="version", version=f"taikoi2t {TAIKOI2T_VERSION}"
     )
@@ -53,31 +51,32 @@ def parse_args(args: Sequence[str]) -> Args:
         default=VERBOSE_SILENT,
         help="print messages and show images for debug (default: silent, -v: error, -vv: print, -vvv: image)",
     )
+    arg_parser.add_argument(
+        "--logfile",
+        type=Path,
+        default=None,
+        help="output logs to this path (default: disabled)",
+    )
     arg_parser.add_argument("files", type=Path, nargs="+", help="target images")
 
-    namespace = Args(Path(), False, [], False, False, False, False, 0, [])
+    namespace = Args(Path(), False, [], False, False, False, False, 0, None, [])
     return arg_parser.parse_args(args=args[1:], namespace=namespace)
 
 
+# Returns False if there are critical errors
 def validate_args(args: Args) -> bool:
     if not args.dictionary.exists():
-        print(
-            f"FATAL: dictionary file {args.dictionary.as_posix()} is not found",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+        logger.critical(f"Dictionary file {args.dictionary.as_posix()} is not found")
+        return False
 
-    if args.dictionary.suffix != ".csv" and args.verbose >= VERBOSE_ERROR:
-        print(
-            f"WARNING: {args.dictionary.as_posix()} has invalid suffix as CSV",
-            file=sys.stderr,
-        )
+    if args.dictionary.suffix != ".csv":
+        logger.warning(f"{args.dictionary.as_posix()} has invalid suffix as CSV")
 
-    unknown_columns: List[str] = [
+    unknown_columns: Sequence[str] = [
         c for c in args.columns if c not in COLUMN_DICTIONARY.keys()
     ]
     if len(unknown_columns) > 0:
-        print(f"FATAL: unknown columns {', '.join(unknown_columns)}", file=sys.stderr)
-        sys.exit(1)
+        logger.critical(f"Unknown columns {', '.join(unknown_columns)}")
+        return False
 
-    return True  # currently always returns True
+    return True

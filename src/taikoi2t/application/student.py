@@ -1,5 +1,6 @@
+import dataclasses
 import itertools
-import sys
+import logging
 from dataclasses import dataclass
 from typing import Callable, Counter, Dict, Iterable, List, Sequence, Tuple
 
@@ -25,14 +26,13 @@ from taikoi2t.implements.student import (
     remove_diacritics,
 )
 from taikoi2t.models.args import (
-    VERBOSE_ERROR,
     VERBOSE_IMAGE,
-    VERBOSE_PRINT,
-    VERBOSE_SILENT,
 )
 from taikoi2t.models.image import BoundingBox, Image
 from taikoi2t.models.ocr import Character
-from taikoi2t.models.student import Student
+from taikoi2t.models.student import Student, StudentDictionary
+
+logger: logging.Logger = logging.getLogger("taikoi2t.student")
 
 STUDENT_EXACT_MATCH_SCORE: float = 0.95
 # reject 0.5 or less
@@ -41,14 +41,7 @@ STUDENT_PRIMARY_CUTOFF_SCORE: float = 0.51
 STUDENT_SECONDARY_CUTOFF_SCORE: float = 0.67
 
 
-@dataclass(frozen=True)
-class ExtractResult:
-    name: str
-    score: float
-    index: int
-
-
-class StudentDictionary:
+class StudentDictionaryImpl(StudentDictionary):
     def __init__(self, raw: Iterable[Tuple[str, str]]) -> None:
         normalized = [(normalize_student_name(r[0]), r[1]) for r in raw]
 
@@ -63,24 +56,31 @@ class StudentDictionary:
             filter(lambda p: p[1] != "", normalized)
         )
 
-    def validate(self, verbose: int = VERBOSE_SILENT) -> bool:
+        self.logger: logging.Logger = logging.getLogger(
+            "taikoi2t.student.StudentDictionary"
+        )
+        self.logger.debug(f"<Init> allow_char_list: {self.allow_char_list}")
+
+    # Returns False if there are critical errors
+    def validate(self) -> bool:
         duplicated_names: Sequence[str] = [
             name for name, count in Counter(self.ordered_names).items() if count > 1
         ]
         if len(duplicated_names) > 0:
-            if verbose >= VERBOSE_ERROR:
-                print(
-                    f"WARNING: duplicated names in student's dictionary {duplicated_names}",
-                    file=sys.stderr,
-                )
+            self.logger.warning(
+                f"Duplicated names in student's dictionary {duplicated_names}"
+            )
         return True  # currently always returns True
 
-    def match(self, recognized_text: str, verbose: int = VERBOSE_SILENT) -> Student:
+    def get_allow_char_list(self) -> str:
+        return self.allow_char_list
+
+    def match(self, recognized_text: str) -> Student:
         if recognized_text == "":
             return new_empty_student()  # empty
 
-        raw_results: Sequence[ExtractResult] = [
-            ExtractResult(name, score, index)
+        raw_results: Sequence[_ExtractResult] = [
+            _ExtractResult(name, score, index)
             for name, score, index in process.extract(
                 recognized_text,
                 self.ordered_names,
@@ -88,10 +88,9 @@ class StudentDictionary:
                 score_cutoff=STUDENT_PRIMARY_CUTOFF_SCORE,
             )
         ]
-        if verbose >= VERBOSE_PRINT:
-            print(f"(raw) input: {recognized_text}, result: {raw_results}")
+        self.logger.debug(f"<Raw> {recognized_text} => {raw_results}")
 
-        raw_first: ExtractResult | None = (
+        raw_first: _ExtractResult | None = (
             raw_results[0] if len(raw_results) > 0 else None
         )
         if raw_first is not None and raw_first.score > STUDENT_EXACT_MATCH_SCORE:
@@ -100,8 +99,8 @@ class StudentDictionary:
         # taking care of missing diacritics in OCR
         # re-matching without diacritics
         no_diacritics_text = remove_diacritics(recognized_text)
-        no_diacritics_results: Sequence[ExtractResult] = [
-            ExtractResult(name, score, index)
+        no_diacritics_results: Sequence[_ExtractResult] = [
+            _ExtractResult(name, score, index)
             for name, score, index in process.extract(
                 no_diacritics_text,
                 self.no_diacritics_names,
@@ -109,12 +108,11 @@ class StudentDictionary:
                 score_cutoff=STUDENT_PRIMARY_CUTOFF_SCORE,
             )
         ]
-        if verbose >= VERBOSE_PRINT:
-            print(
-                f"(no diacritics) input: {no_diacritics_text}, results: {no_diacritics_results}"
-            )
+        self.logger.debug(
+            f"<No-diacritics> {no_diacritics_text} => {no_diacritics_results}"
+        )
 
-        no_diacritics_first: ExtractResult | None
+        no_diacritics_first: _ExtractResult | None
         match no_diacritics_results:
             # diacritics-removed names may be duplicates
             case [first, second, *_] if first.name == second.name:
@@ -130,8 +128,8 @@ class StudentDictionary:
         ):
             return self.__new_student_by(no_diacritics_first.index)  # exact matched
 
-        first_matched: ExtractResult
-        results: Sequence[ExtractResult]
+        first_matched: _ExtractResult
+        results: Sequence[_ExtractResult]
         match (raw_first, no_diacritics_first):
             case (None, None):
                 return new_error_student()  # no students to match
@@ -155,6 +153,17 @@ class StudentDictionary:
         else:
             name = self.ordered_names[index]
             return Student(index, name, self.alias_mapping.get(name))
+
+
+@dataclass(frozen=True)
+class _ExtractResult:
+    name: str
+    score: float
+    index: int
+
+    def __repr__(self) -> str:
+        fields = [f"{f.name}={getattr(self, f.name)}" for f in dataclasses.fields(self)]
+        return f"({', '.join(fields)})"
 
 
 OCR_MODAL_WIDTH: int = 4000
@@ -219,11 +228,10 @@ def recognize_student(
     verbose: int = 0,
 ) -> Student:
     chars: Iterable[Character] = reader.readtext(  # type: ignore
-        preprocessed_image, allowlist=dictionary.allow_char_list, mag_ratio=2
+        preprocessed_image, allowlist=dictionary.get_allow_char_list(), mag_ratio=2
     )
 
-    if verbose >= VERBOSE_PRINT:
-        print([(char[1], float(char[2])) for char in chars])
+    logger.debug(f"<OCR read> {[(char[1], float(char[2])) for char in chars]}")
     if verbose >= VERBOSE_IMAGE:
         preview: Image = cv2.cvtColor(preprocessed_image, cv2.COLOR_GRAY2BGR)
         for char in chars:
@@ -232,7 +240,7 @@ def recognize_student(
         show_image(preview)
 
     name = normalize_student_name(join_chars(chars))
-    return dictionary.match(name, verbose)
+    return dictionary.match(name)
 
 
 CHAR_VERTICAL_PADDING: float = 0.2
@@ -250,6 +258,9 @@ def recognize_student_by_character(
         preprocessed_image, mag_ratio=2
     )
     detected_text_boxes: Iterable[__OCRTextBox] = horizontal_list[0]
+    logger.debug(
+        f"<OCR detect> {[tuple(int(i) for i in b) for b in detected_text_boxes]}"
+    )
 
     single_char_boxes: List[BoundingBox] = []
     for left, right, top, bottom in detected_text_boxes:
@@ -270,20 +281,16 @@ def recognize_student_by_character(
             ]
         else:
             single_char_boxes.append(BoundingBox(left, top, right, bottom))
+    logger.debug(f"<OCR detect> single_char_boxes: {single_char_boxes})")
 
     chars: List[Character] = []
     for box in single_char_boxes:
         chars += reader.recognize(  # type: ignore
             crop(preprocessed_image, box),
-            allowlist=dictionary.allow_char_list,
+            allowlist=dictionary.get_allow_char_list(),
         )
 
-    if verbose >= VERBOSE_PRINT:
-        print(
-            f"detected: {[tuple(int(i) for i in b) for b in detected_text_boxes]}, "
-            + f"single_char_boxes: {single_char_boxes})"
-        )
-        print([(char[1], float(char[2])) for char in chars])
+    logger.debug(f"<OCR recognize> {[(char[1], float(char[2])) for char in chars]}")
     if verbose >= VERBOSE_IMAGE:
         preview: Image = cv2.cvtColor(preprocessed_image, cv2.COLOR_GRAY2BGR)
         for box in single_char_boxes:
@@ -293,7 +300,7 @@ def recognize_student_by_character(
         show_image(preview)
 
     name = normalize_student_name(join_chars(chars))
-    return dictionary.match(name, verbose)
+    return dictionary.match(name)
 
 
 type __OCRTextBox = Tuple[int, int, int, int]

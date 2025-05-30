@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 VERBOSE_SILENT = 0
 VERBOSE_ERROR = 1
@@ -18,4 +18,5 @@ class Args:
     no_alias: bool
     no_sp_sort: bool
     verbose: int
+    logfile: Optional[Path]
     files: Sequence[Path]

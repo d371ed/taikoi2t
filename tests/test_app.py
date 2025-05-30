@@ -11,7 +11,7 @@ import pytest
 from taikoi2t.app import run
 from taikoi2t.application.file import read_student_dictionary_source_file
 from taikoi2t.application.match import extract_match_result
-from taikoi2t.application.student import StudentDictionary
+from taikoi2t.application.student import StudentDictionaryImpl
 from taikoi2t.models.args import VERBOSE_SILENT
 from taikoi2t.models.image import Image, ImageMeta
 from taikoi2t.models.match import MatchResult
@@ -72,7 +72,7 @@ def test_extract_match_result() -> None:
     if not expected_results_path.exists():
         return  # skip
 
-    dictionary = StudentDictionary(
+    dictionary = StudentDictionaryImpl(
         read_student_dictionary_source_file(Path("./students.csv")) or []
     )
     reader = easyocr.Reader(["ja", "en"])

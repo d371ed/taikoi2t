@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
@@ -14,3 +15,12 @@ class Student:
     @property
     def is_error(self) -> bool:
         return self.name == ERROR_STUDENT_NAME
+
+
+class StudentDictionary(ABC):
+    @abstractmethod
+    def validate(self) -> bool: ...
+    @abstractmethod
+    def get_allow_char_list(self) -> str: ...
+    @abstractmethod
+    def match(self, recognized_text: str) -> Student: ...
