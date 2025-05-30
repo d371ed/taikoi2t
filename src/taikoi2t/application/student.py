@@ -50,7 +50,11 @@ class StudentDictionaryImpl(StudentDictionary):
             remove_diacritics(n) for n in self.ordered_names
         ]
         self.allow_char_list: str = (
-            "".join(set("".join(self.ordered_names + self.no_diacritics_names))) + "()"
+            "".join(
+                set("".join(self.ordered_names + self.no_diacritics_names))
+                - set("（）")
+            )
+            + "()"
         )
         self.alias_mapping: Dict[str, str] = dict(
             filter(lambda p: p[1] != "", normalized)
