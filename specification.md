@@ -290,36 +290,42 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
         "owner": "プレイヤー",
         "strikers": {
           "striker1": {
-            "index": 162,
+            "index": 165,
             "name": "ホシノ",
-            "alias": null
+            "alias": null,
+            "display_name": "ホシノ"
           },
           "striker2": {
-            "index": 187,
+            "index": 189,
             "name": "ミヤコ",
-            "alias": null
+            "alias": null,
+            "display_name": "ミヤコ"
           },
           "striker3": {
             "index": 90,
             "name": "シロコ＊テラー",
-            "alias": "シロコ＊"
+            "alias": "シロコ＊",
+            "display_name": "シロコ＊"
           },
           "striker4": {
-            "index": 129,
+            "index": 131,
             "name": "ノノミ",
-            "alias": null
+            "alias": null,
+            "display_name": "ノノミ"
           }
         },
         "specials": {
           "special1": {
             "index": 0,
             "name": "シロコ（水着）",
-            "alias": "水シロコ"
+            "alias": "水シロコ",
+            "display_name": "水シロコ"
           },
           "special2": {
             "index": 18,
             "name": "アヤネ（水着）",
-            "alias": "水アヤネ"
+            "alias": "水アヤネ",
+            "display_name": "水アヤネ"
           }
         }
       },
@@ -328,36 +334,42 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
         "owner": "対戦相手",
         "strikers": {
           "striker1": {
-            "index": 162,
+            "index": 165,
             "name": "ホシノ",
-            "alias": null
+            "alias": null,
+            "display_name": "ホシノ"
           },
           "striker2": {
             "index": 84,
             "name": "シュン",
-            "alias": null
+            "alias": null,
+            "display_name": "シュン"
           },
           "striker3": {
             "index": 90,
             "name": "シロコ＊テラー",
-            "alias": "シロコ＊"
+            "alias": "シロコ＊",
+            "display_name": "シロコ＊"
           },
           "striker4": {
-            "index": 211,
+            "index": 213,
             "name": "レイサ",
-            "alias": null
+            "alias": null,
+            "display_name": "レイサ"
           }
         },
         "specials": {
           "special1": {
             "index": 0,
             "name": "シロコ（水着）",
-            "alias": "水シロコ"
+            "alias": "水シロコ",
+            "display_name": "水シロコ"
           },
           "special2": {
-            "index": 217,
+            "index": 219,
             "name": "佐天涙子",
-            "alias": null
+            "alias": null,
+            "display_name": "佐天涙子"
           }
         }
       }

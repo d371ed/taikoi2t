@@ -61,6 +61,18 @@ def test_run_json(capsys: pytest.CaptureFixture[str]) -> None:
     out_json = json.loads(captured.out)
     assert out_json["matches"][0]["player"]["wins"] is True
     assert out_json["matches"][0]["player"]["strikers"]["striker1"]["name"] == "ホシノ"
+    assert (
+        out_json["matches"][0]["player"]["strikers"]["striker1"]["display_name"]
+        == "ホシノ"
+    )
+    assert (
+        out_json["matches"][0]["player"]["strikers"]["striker3"]["name"]
+        == "シロコ＊テラー"
+    )
+    assert (
+        out_json["matches"][0]["player"]["strikers"]["striker3"]["display_name"]
+        == "シロコ＊"
+    )
     assert out_json["matches"][0]["opponent"]["owner"] != "null"
     assert captured.err == ""
 

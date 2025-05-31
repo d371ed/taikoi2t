@@ -1,7 +1,5 @@
-import json
 import logging
 import sys
-from dataclasses import asdict
 from datetime import datetime
 from typing import Sequence
 
@@ -17,6 +15,7 @@ from taikoi2t.application.match import extract_match_result
 from taikoi2t.application.student import (
     StudentDictionaryImpl,
 )
+from taikoi2t.implements.json import to_json_str
 from taikoi2t.implements.match import (
     new_errored_match_result,
     render_match,
@@ -103,7 +102,12 @@ def run(argv: Sequence[str] | None = None) -> None:
     logger.info(f"=== RUN FINISHED; elapsed: {run_ends_at - run_starts_at} ===")
 
     if settings.output_format == "json":
-        print(json.dumps(asdict(run_result), ensure_ascii=False))
+        json_str = to_json_str(run_result)
+        if json_str is None:
+            logger.critical(f"Failed to serialize the result as JSON: {run_result}")
+            sys.exit(1)
+        else:
+            print(json_str)
 
 
 def __set_logging(args: Args) -> None:
