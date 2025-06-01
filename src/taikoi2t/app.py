@@ -50,9 +50,6 @@ def run(argv: Sequence[str] | None = None) -> None:
 
     student_alias_pairs = read_student_dictionary_source_file(args.dictionary)
     if student_alias_pairs is None:
-        logger.critical(
-            f"{args.dictionary.as_posix()} is invalid as student's dictionary"
-        )
         sys.exit(1)
 
     student_dictionary: StudentDictionary = StudentDictionaryImpl(student_alias_pairs)
