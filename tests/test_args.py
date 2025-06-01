@@ -103,6 +103,18 @@ def test_parse_args_no_sp_sort() -> None:
     assert res2.no_sp_sort is False
 
 
+def test_parse_args_file_sort() -> None:
+    res1 = parse_args("app -d dict.csv --file-sort MODIFY_DESC image0.png".split())
+    assert res1.file_sort == "MODIFY_DESC"
+
+    res2 = parse_args("app -d dict.csv image0.png".split())
+    assert res2.file_sort is None
+
+    with pytest.raises(SystemExit) as e:
+        parse_args("app -d dict.csv --file-sort INVALID image0.png".split())
+    assert e.value.code == 2
+
+
 def test_parse_args_verbose() -> None:
     res1 = parse_args("app -d dict.csv --verbose image0.png".split())
     assert res1.verbose == VERBOSE_ERROR
@@ -150,6 +162,7 @@ def test_validate_args_valid(caplog: pytest.LogCaptureFixture) -> None:
         json=False,
         no_alias=False,
         no_sp_sort=False,
+        file_sort=None,
         verbose=VERBOSE_SILENT,
         logfile=None,
         files=[Path("image0.png")],
@@ -167,6 +180,7 @@ def test_validate_args_not_found(caplog: pytest.LogCaptureFixture) -> None:
         json=False,
         no_alias=False,
         no_sp_sort=False,
+        file_sort=None,
         verbose=VERBOSE_SILENT,
         logfile=None,
         files=[Path("image0.png")],
@@ -188,6 +202,7 @@ def test_validate_args_invalid_suffix(
         json=False,
         no_alias=False,
         no_sp_sort=False,
+        file_sort=None,
         verbose=VERBOSE_SILENT,
         logfile=None,
         files=[Path("image0.png")],
@@ -211,6 +226,7 @@ def test_validate_args_unknown_columns(caplog: pytest.LogCaptureFixture) -> None
         json=False,
         no_alias=False,
         no_sp_sort=False,
+        file_sort=None,
         verbose=VERBOSE_SILENT,
         logfile=None,
         files=[Path("image0.png")],

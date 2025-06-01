@@ -10,11 +10,12 @@ from taikoi2t.application.args import (
     parse_args,
     validate_args,
 )
-from taikoi2t.application.file import expand_paths, read_student_dictionary_source_file
+from taikoi2t.application.file import read_student_dictionary_source_file
 from taikoi2t.application.match import extract_match_result
 from taikoi2t.application.student import (
     StudentDictionaryImpl,
 )
+from taikoi2t.implements.file import expand_paths, sort_files
 from taikoi2t.implements.json import to_json_str
 from taikoi2t.implements.match import (
     new_errored_match_result,
@@ -58,18 +59,32 @@ def run(argv: Sequence[str] | None = None) -> None:
 
     reader = easyocr.Reader(["ja", "en"], verbose=settings.verbose >= VERBOSE_PRINT)
 
+    expanded_paths = expand_paths(args.files)
+    sorted_paths = (
+        expanded_paths
+        if args.file_sort is None
+        else sort_files(expanded_paths, args.file_sort)
+    )
+
     def append_match_result(match_result: MatchResult) -> None:
         run_result.matches.append(match_result)
         if settings.output_format != "json":
             print(render_match(match_result, settings))
 
-    for path in expand_paths(args.files):
+    logger.info(f"=== INITIALIZED; elapsed: {datetime.now() - run_starts_at} ===")
+
+    for path in sorted_paths:
         image_process_starts_at = datetime.now()
         logger.info(f"=== START: {path.as_posix()} ===")
 
         image_meta = ImageMeta(path.as_posix(), path.name)
         if not path.exists():
             logger.error(f"{path.as_posix()} is not found")
+            append_match_result(new_errored_match_result(image_meta))
+            continue
+
+        if not path.is_file():
+            logger.error(f"{path.as_posix()} is not a file")
             append_match_result(new_errored_match_result(image_meta))
             continue
 

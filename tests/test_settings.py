@@ -119,6 +119,7 @@ def __new_args(
         json=json,
         no_alias=no_alias,
         no_sp_sort=no_sp_sort,
+        file_sort=None,
         verbose=VERBOSE_SILENT,
         logfile=None,
         files=[],

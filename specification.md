@@ -3,7 +3,9 @@
 ```
 usage: taikoi2t
        [-h] [--version] -d DICTIONARY [--opponent | -c COLUMNS [COLUMNS ...]]
-       [--csv | --json] [--no-alias] [--no-sp-sort] [-v] [--logfile LOGFILE]
+       [--csv | --json] [--no-alias] [--no-sp-sort]
+       [--file-sort {BIRTH_ASC,BIRTH_DESC,MODIFY_ASC,MODIFY_DESC,NAME_ASC,NAME_DESC}]
+       [-v] [--logfile LOGFILE]
        files [files ...]
 
 positional arguments:
@@ -21,6 +23,8 @@ options:
   --json                change output to JSON (default: TSV)
   --no-alias            turn off alias mapping for student's name
   --no-sp-sort          turn off sorting specials
+  --file-sort {BIRTH_ASC,BIRTH_DESC,MODIFY_ASC,MODIFY_DESC,NAME_ASC,NAME_DESC}
+                        sort input files (default: disabled)
   -v, --verbose         print messages and show images for debug (default:
                         silent, -v: error, -vv: print, -vvv: image)
   --logfile LOGFILE     output logs to this path (default: disabled)
@@ -126,6 +130,24 @@ TSV と同様ヘッダ行はありません.
 スペシャル生徒の左右調整機能をオフ.
 
 辞書内の記載順を無視し, 入力画像の順番を維持します.
+
+
+### `--file-sort`
+
+任意.
+`files` のソート順を指定.
+
+- `BIRTH_ASC`: 生成日時, 昇順
+- `BIRTH_DESC`: 生成日時, 降順
+- `MODIFY_ASC`: 最終更新, 昇順
+- `MODIFY_DESC`: 最終更新, 降順
+- `NAME_ASC`: ファイル名, 昇順
+- `NAME_DESC`: ファイル名, 降順
+- 指定なし (デフォルト): コマンドライン引数の順
+
+ファイルの日時情報を参照するソートでは, 存在しないファイルパスに対応するエラー行は (昇順降順に関わらず) 末尾に集められます.
+
+逆に, 名前順は正常なパスと混合してソートされ, デフォルトの指定なしの場合は引数順と同じ位置にエラー行が出力されます.
 
 
 ### `-v, --verbose`

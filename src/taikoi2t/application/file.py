@@ -1,8 +1,7 @@
 import csv
-import glob
 import logging
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
 
 logger: logging.Logger = logging.getLogger("taikoi2t.file")
 
@@ -12,7 +11,7 @@ def read_student_dictionary_source_file(path: Path) -> List[Tuple[str, str]] | N
         logger.critical(f"{path.as_posix()} is not found")
         return None
     if not path.is_file():
-        logger.critical(f"{path.as_posix()} is not file")
+        logger.critical(f"{path.as_posix()} is not a file")
         return None
 
     rows: List[Tuple[str, str]] = []
@@ -33,14 +32,3 @@ def read_student_dictionary_source_file(path: Path) -> List[Tuple[str, str]] | N
         logger.critical(f"{path.as_posix()} is invalid as student's dictionary")
         return None
     return rows
-
-
-def expand_paths(paths: Iterable[Path]) -> List[Path]:
-    expanded: List[Path] = []
-    for path in paths:
-        path_str = path.as_posix()
-        if "*" in path_str:  # wildcard
-            expanded.extend(map(Path, sorted(glob.glob(path_str))))
-        else:
-            expanded.append(path)
-    return expanded

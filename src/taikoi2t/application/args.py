@@ -6,6 +6,7 @@ from typing import Sequence
 from taikoi2t import TAIKOI2T_VERSION
 from taikoi2t.application.column import COLUMN_DICTIONARY
 from taikoi2t.models.args import VERBOSE_SILENT, Args
+from taikoi2t.models.file import ALL_FILE_SORT_KEY_ORDERS
 
 logger: logging.Logger = logging.getLogger("taikoi2t.args")
 
@@ -45,6 +46,13 @@ def parse_args(args: Sequence[str]) -> Args:
         "--no-sp-sort", action="store_true", help="turn off sorting specials"
     )
     arg_parser.add_argument(
+        "--file-sort",
+        type=str,
+        choices=sorted(ALL_FILE_SORT_KEY_ORDERS),
+        default=None,
+        help="sort input files (default: disabled)",
+    )
+    arg_parser.add_argument(
         "-v",
         "--verbose",
         action="count",
@@ -59,7 +67,7 @@ def parse_args(args: Sequence[str]) -> Args:
     )
     arg_parser.add_argument("files", type=Path, nargs="+", help="target images")
 
-    namespace = Args(Path(), False, [], False, False, False, False, 0, None, [])
+    namespace = Args(Path(), False, [], False, False, False, False, None, 0, None, [])
     return arg_parser.parse_args(args=args[1:], namespace=namespace)
 
 
