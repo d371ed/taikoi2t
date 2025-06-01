@@ -1,6 +1,7 @@
 import csv
+import glob
 from pathlib import Path
-from typing import List, Tuple
+from typing import Iterable, List, Tuple
 
 
 def read_student_dictionary_source_file(path: Path) -> List[Tuple[str, str]] | None:
@@ -16,3 +17,14 @@ def read_student_dictionary_source_file(path: Path) -> List[Tuple[str, str]] | N
     if len(rows) == 0:
         return None
     return rows
+
+
+def expand_paths(paths: Iterable[Path]) -> List[Path]:
+    expanded: List[Path] = []
+    for path in paths:
+        path_str = path.as_posix()
+        if "*" in path_str:  # wildcard
+            expanded.extend(map(Path, sorted(glob.glob(path_str))))
+        else:
+            expanded.append(path)
+    return expanded

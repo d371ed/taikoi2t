@@ -10,7 +10,7 @@ from taikoi2t.application.args import (
     parse_args,
     validate_args,
 )
-from taikoi2t.application.file import read_student_dictionary_source_file
+from taikoi2t.application.file import expand_paths, read_student_dictionary_source_file
 from taikoi2t.application.match import extract_match_result
 from taikoi2t.application.student import (
     StudentDictionaryImpl,
@@ -66,7 +66,7 @@ def run(argv: Sequence[str] | None = None) -> None:
         if settings.output_format != "json":
             print(render_match(match_result, settings))
 
-    for path in args.files:
+    for path in expand_paths(args.files):
         image_process_starts_at = datetime.now()
         logger.info(f"=== START: {path.as_posix()} ===")
 
