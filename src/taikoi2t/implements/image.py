@@ -1,9 +1,11 @@
 import math
+from pathlib import Path
+from typing import Tuple
 
 import cv2
 import numpy
 
-from taikoi2t.models.image import BoundingBox, Image, RelativeBox
+from taikoi2t.models.image import BoundingBox, Image, ImageMeta, RelativeBox
 
 
 def get_roi_bbox(source: BoundingBox, relative_roi: RelativeBox) -> BoundingBox:
@@ -66,3 +68,24 @@ def show_image(image: Image, title: str = "") -> None:
     cv2.imshow(title, image)
     cv2.waitKey()
     cv2.destroyAllWindows()
+
+
+def new_image_meta(
+    path: Path,
+    image_dimension: Tuple[int, int] | None = None,
+    modal: BoundingBox | None = None,
+) -> ImageMeta:
+    stat = path.stat() if path.exists() else None
+    btime, mtime = (
+        (None, None) if stat is None else (stat.st_birthtime_ns, stat.st_mtime_ns)
+    )
+    width, height = (None, None) if image_dimension is None else image_dimension
+    return ImageMeta(
+        path=path.as_posix(),
+        name=path.name,
+        birth_time_ns=btime,
+        modify_time_ns=mtime,
+        width=width,
+        height=height,
+        modal=modal,
+    )

@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence
 
 from taikoi2t.models.column import Column
 
@@ -12,10 +12,13 @@ OPPONENT_COLUMN_KEYS: Sequence[str] = [
 ]
 
 COLUMNS: Sequence[Column] = [
+    Column(["IMAGE_ID", "ID"], None, lambda m: [m.id]),
     Column(["IMAGE_PATH"], None, lambda m: [m.image.path]),
     Column(["IMAGE_NAME", "INAME"], None, lambda m: [m.image.name]),
-    Column(["IMAGE_WIDTH"], None, lambda m: [str(m.image.width)]),
-    Column(["IMAGE_HEIGHT"], None, lambda m: [str(m.image.height)]),
+    Column(["IMAGE_BIRTH_TIME"], None, lambda m: [__opt_int(m.image.birth_time_ns)]),
+    Column(["IMAGE_MODIFY_TIME"], None, lambda m: [__opt_int(m.image.modify_time_ns)]),
+    Column(["IMAGE_WIDTH"], None, lambda m: [__opt_int(m.image.width)]),
+    Column(["IMAGE_HEIGHT"], None, lambda m: [__opt_int(m.image.height)]),
     Column(
         ["PLAYER_WINS", "LEFT_WINS", "PWIN", "LWIN"],
         "win_or_lose",
@@ -29,7 +32,7 @@ COLUMNS: Sequence[Column] = [
     Column(
         ["PLAYER_NAME", "PLAYER_OWNER", "LEFT_OWNER", "PNAME", "POWN", "LOWN"],
         "player",
-        lambda m: ["Error"] if m.player.owner is None else [m.player.owner],
+        lambda m: [__opt_str(m.player.owner)],
     ),
     Column(
         [
@@ -98,7 +101,7 @@ COLUMNS: Sequence[Column] = [
     Column(
         ["OPPONENT_NAME", "OPPONENT_OWNER", "RIGHT_OWNER", "ONAME", "OOWN", "ROWN"],
         "opponent",
-        lambda m: ["Error"] if m.opponent.owner is None else [m.opponent.owner],
+        lambda m: [__opt_str(m.opponent.owner)],
     ),
     Column(
         [
@@ -161,3 +164,11 @@ COLUMNS: Sequence[Column] = [
 COLUMN_DICTIONARY: Dict[str, Column] = dict(
     chain.from_iterable([(key, column) for key in column.keys] for column in COLUMNS)
 )
+
+
+def __opt_str(value: Optional[str]) -> str:
+    return "Error" if value is None else value
+
+
+def __opt_int(value: Optional[int]) -> str:
+    return "-1" if value is None else str(value)

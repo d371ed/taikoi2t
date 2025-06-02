@@ -3,10 +3,11 @@
     "easyocr",
     "imread",
     "imshow",
+    "logfile",
     "opencv",
-    "THRESH_OTSU",
     "pytest",
     "readtext",
-    "taikoi2t"
+    "taikoi2t",
+    "THRESH_OTSU"
   ]
 }

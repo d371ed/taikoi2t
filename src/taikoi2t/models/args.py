@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
+
+from taikoi2t.models.file import FileSortKeyOrder
 
 VERBOSE_SILENT = 0
 VERBOSE_ERROR = 1
@@ -17,5 +19,7 @@ class Args:
     json: bool
     no_alias: bool
     no_sp_sort: bool
+    file_sort: Optional[FileSortKeyOrder]
     verbose: int
+    logfile: Optional[Path]
     files: Sequence[Path]

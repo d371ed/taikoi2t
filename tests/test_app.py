@@ -11,7 +11,7 @@ import pytest
 from taikoi2t.app import run
 from taikoi2t.application.file import read_student_dictionary_source_file
 from taikoi2t.application.match import extract_match_result
-from taikoi2t.application.student import StudentDictionary
+from taikoi2t.application.student import StudentDictionaryImpl
 from taikoi2t.models.args import VERBOSE_SILENT
 from taikoi2t.models.image import Image, ImageMeta
 from taikoi2t.models.match import MatchResult
@@ -61,6 +61,18 @@ def test_run_json(capsys: pytest.CaptureFixture[str]) -> None:
     out_json = json.loads(captured.out)
     assert out_json["matches"][0]["player"]["wins"] is True
     assert out_json["matches"][0]["player"]["strikers"]["striker1"]["name"] == "ホシノ"
+    assert (
+        out_json["matches"][0]["player"]["strikers"]["striker1"]["display_name"]
+        == "ホシノ"
+    )
+    assert (
+        out_json["matches"][0]["player"]["strikers"]["striker3"]["name"]
+        == "シロコ＊テラー"
+    )
+    assert (
+        out_json["matches"][0]["player"]["strikers"]["striker3"]["display_name"]
+        == "シロコ＊"
+    )
     assert out_json["matches"][0]["opponent"]["owner"] != "null"
     assert captured.err == ""
 
@@ -72,7 +84,7 @@ def test_extract_match_result() -> None:
     if not expected_results_path.exists():
         return  # skip
 
-    dictionary = StudentDictionary(
+    dictionary = StudentDictionaryImpl(
         read_student_dictionary_source_file(Path("./students.csv")) or []
     )
     reader = easyocr.Reader(["ja", "en"])
@@ -90,12 +102,18 @@ def test_extract_match_result() -> None:
         for row in csv.reader(expected_results_file):
             expected_result = new_expected_result_from(row)
             image_meta = ImageMeta(
-                expected_result.path.as_posix(), expected_result.path.name
+                path=expected_result.path.as_posix(),
+                name=expected_result.path.name,
+                birth_time_ns=None,
+                modify_time_ns=None,
+                width=None,
+                height=None,
+                modal=None,
             )
             source_image: Image = cv2.imread(image_meta.path)
 
             actual = extract_match_result(
-                source_image, image_meta, dictionary, reader, settings
+                "id", expected_result.path, source_image, dictionary, reader, settings
             )
             assert actual is not None
 
