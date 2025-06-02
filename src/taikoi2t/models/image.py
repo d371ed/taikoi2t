@@ -30,10 +30,12 @@ class RelativeBox:
     bottom: float
 
 
-@dataclass
+@dataclass(frozen=True)
 class ImageMeta:
     path: str
     name: str
-    width: Optional[int] = None
-    height: Optional[int] = None
-    modal: Optional[BoundingBox] = None
+    birth_time_ns: Optional[int]  # in nanoseconds
+    modify_time_ns: Optional[int]
+    width: Optional[int]
+    height: Optional[int]
+    modal: Optional[BoundingBox]

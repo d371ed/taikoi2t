@@ -297,9 +297,12 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
   "ends_at": "2025-05-01T00:00:05.000000",
   "matches": [
     {
+      "id": "1746025200000000000-0004png",
       "image": {
         "path": "tests/images/0004.png",
         "name": "0004.png",
+        "birth_time_ns": 1743163601404323300,
+        "modify_time_ns": 1743163601461993500,
         "width": 2560,
         "height": 1080,
         "modal": {
@@ -403,7 +406,8 @@ FALSE Error Error Error Error Error Error Error Error Error Error Error Error Er
 ```
 </details>
 
-生徒の `index` は与えられた辞書内での行位置 (行 - 1) を表します.
+- `index`: 与えられた辞書内での行位置 (行 - 1)
+- `display_name`: `alias` があればその別名, 無ければ元の `name` と同じ文字列
 
 
 ## 生徒名辞書

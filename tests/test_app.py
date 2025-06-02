@@ -102,12 +102,18 @@ def test_extract_match_result() -> None:
         for row in csv.reader(expected_results_file):
             expected_result = new_expected_result_from(row)
             image_meta = ImageMeta(
-                expected_result.path.as_posix(), expected_result.path.name
+                path=expected_result.path.as_posix(),
+                name=expected_result.path.name,
+                birth_time_ns=None,
+                modify_time_ns=None,
+                width=None,
+                height=None,
+                modal=None,
             )
             source_image: Image = cv2.imread(image_meta.path)
 
             actual = extract_match_result(
-                source_image, image_meta, dictionary, reader, settings
+                "id", expected_result.path, source_image, dictionary, reader, settings
             )
             assert actual is not None
 

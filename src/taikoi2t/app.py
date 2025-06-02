@@ -3,7 +3,6 @@ import sys
 from datetime import datetime
 from typing import Sequence
 
-import cv2
 import easyocr  # type: ignore
 
 from taikoi2t.application.args import (
@@ -11,7 +10,7 @@ from taikoi2t.application.args import (
     validate_args,
 )
 from taikoi2t.application.file import read_student_dictionary_source_file
-from taikoi2t.application.match import extract_match_result
+from taikoi2t.application.match import extract_match_result_from_path
 from taikoi2t.application.student import (
     StudentDictionaryImpl,
 )
@@ -23,8 +22,6 @@ from taikoi2t.implements.match import (
 )
 from taikoi2t.implements.settings import new_settings_from
 from taikoi2t.models.args import VERBOSE_ERROR, VERBOSE_PRINT, Args
-from taikoi2t.models.image import Image, ImageMeta
-from taikoi2t.models.match import MatchResult
 from taikoi2t.models.run import RunResult
 from taikoi2t.models.student import StudentDictionary
 
@@ -66,48 +63,16 @@ def run(argv: Sequence[str] | None = None) -> None:
         else sort_files(expanded_paths, args.file_sort)
     )
 
-    def append_match_result(match_result: MatchResult) -> None:
-        run_result.matches.append(match_result)
-        if settings.output_format != "json":
-            print(render_match(match_result, settings))
-
     logger.info(f"=== INITIALIZED; elapsed: {datetime.now() - run_starts_at} ===")
 
     for path in sorted_paths:
-        image_process_starts_at = datetime.now()
-        logger.info(f"=== START: {path.as_posix()} ===")
+        match_result = extract_match_result_from_path(
+            path, student_dictionary, reader, settings
+        ) or new_errored_match_result(path)
 
-        image_meta = ImageMeta(path.as_posix(), path.name)
-        if not path.exists():
-            logger.error(f"{path.as_posix()} is not found")
-            append_match_result(new_errored_match_result(image_meta))
-            continue
-
-        if not path.is_file():
-            logger.error(f"{path.as_posix()} is not a file")
-            append_match_result(new_errored_match_result(image_meta))
-            continue
-
-        # imread returns None when error occurred
-        source: Image | None = cv2.imread(path.as_posix())
-        if source is None:  # type: ignore
-            logger.error(f"{path.as_posix()} cannot read as an image")
-            append_match_result(new_errored_match_result(image_meta))
-            continue
-
-        # overwrite dimensions
-        image_meta.height, image_meta.width, _ = source.shape
-
-        match_result = extract_match_result(
-            source, image_meta, student_dictionary, reader, settings
-        ) or new_errored_match_result(image_meta)
-
-        logger.info(f"{path.as_posix()} => {match_result}")
-        append_match_result(match_result)
-
-        logger.info(
-            f"=== END: {path.as_posix()}; elapsed: {datetime.now() - image_process_starts_at} ==="
-        )
+        run_result.matches.append(match_result)
+        if settings.output_format != "json":
+            print(render_match(match_result, settings))
 
     run_ends_at = datetime.now()
     run_result.ends_at = run_ends_at.isoformat()

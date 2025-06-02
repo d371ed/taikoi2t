@@ -3,7 +3,7 @@ from itertools import chain
 from typing import Iterable, Sequence
 
 from taikoi2t.application.column import COLUMN_DICTIONARY, COLUMNS
-from taikoi2t.models.image import ImageMeta
+from taikoi2t.models.image import BoundingBox, ImageMeta
 from taikoi2t.models.match import MatchResult
 from taikoi2t.models.student import Student
 from taikoi2t.models.team import Specials, Strikers, Team
@@ -18,7 +18,16 @@ __S7 = Student(7, "シュン", None)
 __S8 = Student(8, "ハナコ（水着）", "水ハナコ")
 __S9 = Student(9, "ヒビキ", None)
 __MATCH = MatchResult(
-    image=ImageMeta("", ""),
+    id="1234567890-image0png",
+    image=ImageMeta(
+        path="path/to/image0.png",
+        name="image0.png",
+        birth_time_ns=1111,
+        modify_time_ns=2222,
+        width=1920,
+        height=1080,
+        modal=BoundingBox(10, 20, 300, 400),
+    ),
     player=Team(True, None, Strikers(__S2, __S3, __S4, __S5), Specials(__S1, __S6)),
     opponent=Team(
         False, "対戦相手", Strikers(__S2, __S7, __S4, __S8), Specials(__S9, __S1)
