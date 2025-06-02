@@ -43,8 +43,9 @@ class __ColumnCount:
 
 def test_COLUMNS_selected_column_count() -> None:
     targets: Iterable[__ColumnCount] = [
+        __ColumnCount(["IMAGE_ID", "ID", "IMAGE_PATH", "IMAGE_NAME", "INAME"], 1),
         __ColumnCount(
-            ["IMAGE_PATH", "IMAGE_NAME", "INAME", "IMAGE_WIDTH", "IMAGE_HEIGHT"], 1
+            ["IMAGE_BIRTH_TIME", "IMAGE_MODIFY_TIME", "IMAGE_WIDTH", "IMAGE_HEIGHT"], 1
         ),
         __ColumnCount(["PLAYER_WINS", "LEFT_WINS", "PWIN", "LWIN"], 1),
         __ColumnCount(["PLAYER_WOL", "LEFT_WOL", "PWOL", "LWOL"], 1),

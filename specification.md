@@ -62,10 +62,13 @@ options:
 <details>
 <summary>使用できる列の一覧 (クリックで展開)</summary>
 
+- `IMAGE_ID`, `ID`: 抽出処理 ID (処理開始時刻と画像ファイル名から生成)
 - `IMAGE_PATH`: 画像のパス
 - `IMAGE_NAME`, `INAME`: 画像パスのファイル名部分
-- `IMAGE_WIDTH`: 画像の幅 (pixel)
-- `IMAGE_HEIGHT`: 画像の高さ (pixel)
+- `IMAGE_BIRTH_TIME`: ファイルの作成日時のエポックナノ秒 (エラー時 `-1`)
+- `IMAGE_MODIFY_TIME`: ファイルの更新日時のエポックナノ秒 (エラー時 `-1`)
+- `IMAGE_WIDTH`: 画像の幅 (pixel. エラー時 `-1`)
+- `IMAGE_HEIGHT`: 画像の高さ (pixel. エラー時 `-1`)
 - `PLAYER_WINS`, `LEFT_WINS`, `PWIN`, `LWIN`: プレイヤー側勝利で `TRUE`, 敗北かエラー時 `FALSE`
 - `PLAYER_WOL`, `LEFT_WOL`, `PWOL`, `LWOL`: プレイヤー側勝利で `Win`, 敗北かエラー時 `Lose`
 - `PLAYER_NAME`, `PLAYER_OWNER`, `LEFT_OWNER`, `PNAME`, `POWN`, `LOWN`: プレイヤーの先生名
