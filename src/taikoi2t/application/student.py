@@ -4,17 +4,17 @@ import logging
 from dataclasses import dataclass
 from typing import Callable, Counter, Dict, Iterable, List, Sequence, Tuple
 
-import cv2
 import easyocr  # type: ignore
 import rapidfuzz
 from rapidfuzz import process
 
 from taikoi2t.implements.image import (
+    binarize,
     crop,
     level_contrast,
     resize_to,
     sharpen,
-    show_image,
+    show_bboxes,
     skew,
     smooth,
 )
@@ -192,13 +192,13 @@ STUDENTS_LEFT_XS: Iterable[int] = list(
     )
 )
 
-OCR_PREPROCESS: Iterable[Callable[[Image], Image]] = [
+OCR_PREPROCESS: Iterable[Callable[[Image], Image | None]] = [
     lambda src: resize_to(src, OCR_MODAL_WIDTH),
     lambda src: skew(src, 14.0),
     lambda src: smooth(src, 9),
     lambda src: sharpen(src, 2),
     lambda src: level_contrast(src, 144, 192),
-    lambda src: cv2.threshold(src, 0, 255, cv2.THRESH_OTSU)[1],
+    lambda src: binarize(src),
 ]
 
 
@@ -212,8 +212,12 @@ def preprocess_students_for_ocr(grayscale: Image, modal: BoundingBox) -> List[Im
             bottom=modal.bottom,
         ),
     )
-    for pred in OCR_PREPROCESS:
-        preprocessed = pred(preprocessed)
+    for index, pred in enumerate(OCR_PREPROCESS):
+        temp = pred(preprocessed)
+        if temp is None:
+            logger.error(f"<OCR pre> Image preprocess error at {index}")
+            return []
+        preprocessed = temp
 
     # cut out 12 sections
     height: int = preprocessed.shape[1]
@@ -231,17 +235,27 @@ def recognize_student(
     preprocessed_image: Image,
     verbose: int = 0,
 ) -> Student:
-    chars: Iterable[Character] = reader.readtext(  # type: ignore
-        preprocessed_image, allowlist=dictionary.get_allow_char_list(), mag_ratio=2
-    )
+    chars: Sequence[Character] = []
+    height, width = preprocessed_image.shape[:2]
+    if width > 0 and height > 0:
+        try:
+            chars = reader.readtext(  # type: ignore
+                preprocessed_image,
+                allowlist=dictionary.get_allow_char_list(),
+                mag_ratio=2,
+            )
+        except Exception as e:
+            logger.error(e)
+    if len(chars) == 0:
+        return new_error_student()
 
     logger.debug(f"<OCR read> {[(char[1], float(char[2])) for char in chars]}")
     if verbose >= VERBOSE_IMAGE:
-        preview: Image = cv2.cvtColor(preprocessed_image, cv2.COLOR_GRAY2BGR)
-        for char in chars:
-            top_left, _, bottom_right, _ = char[0]
-            cv2.rectangle(preview, top_left, bottom_right, (0, 255, 0))
-        show_image(preview)
+        bboxes = [
+            BoundingBox(char[0][0][0], char[0][0][1], char[0][2][0], char[0][2][1])
+            for char in chars
+        ]
+        show_bboxes(preprocessed_image, bboxes, to_bgr=True)
 
     name = normalize_student_name(join_chars(chars))
     return dictionary.match(name)
@@ -257,10 +271,17 @@ def recognize_student_by_character(
     preprocessed_image: Image,
     verbose: int = 0,
 ) -> Student:
-    horizontal_list: List[List[__OCRTextBox]]  # in order to solve the type in Pylance
-    horizontal_list, _ = reader.detect(  # type: ignore
-        preprocessed_image, mag_ratio=2
-    )
+    # in order to solve the type in Pylance
+    horizontal_list: List[List[__OCRTextBox]] = []
+    try:
+        horizontal_list, _ = reader.detect(  # type: ignore
+            preprocessed_image, mag_ratio=2
+        )
+    except Exception as e:
+        logger.error(e)
+    if len(horizontal_list) == 0:
+        return new_error_student()
+
     detected_text_boxes: Iterable[__OCRTextBox] = horizontal_list[0]
     logger.debug(
         f"<OCR detect> {[tuple(int(i) for i in b) for b in detected_text_boxes]}"
@@ -276,32 +297,37 @@ def recognize_student_by_character(
             single_char_width: int = width // char_count
             single_char_boxes += [
                 BoundingBox(
-                    left=int(left + single_char_width * i),
-                    top=int(top),
-                    right=int(left + single_char_width * (i + 1)),
-                    bottom=int(bottom),
+                    left=left + single_char_width * i,
+                    top=top,
+                    right=left + single_char_width * (i + 1),
+                    bottom=bottom,
                 )
                 for i in range(char_count)
             ]
         else:
-            single_char_boxes.append(BoundingBox(left, top, right, bottom))
-    logger.debug(f"<OCR detect> single_char_boxes: {single_char_boxes})")
+            single_char_boxes.append(
+                BoundingBox(left=left, top=top, right=right, bottom=bottom)
+            )
+    logger.debug(
+        f"<OCR detect> single_char_boxes: {[b.as_python_int() for b in single_char_boxes]}"
+    )
 
     chars: List[Character] = []
     for box in single_char_boxes:
-        chars += reader.recognize(  # type: ignore
-            crop(preprocessed_image, box),
-            allowlist=dictionary.get_allow_char_list(),
-        )
+        if box.is_empty():
+            continue
+        try:
+            chars += reader.recognize(  # type: ignore
+                crop(preprocessed_image, box),
+                allowlist=dictionary.get_allow_char_list(),
+            )
+        except Exception as e:
+            logger.error(e)
+            continue
 
     logger.debug(f"<OCR recognize> {[(char[1], float(char[2])) for char in chars]}")
     if verbose >= VERBOSE_IMAGE:
-        preview: Image = cv2.cvtColor(preprocessed_image, cv2.COLOR_GRAY2BGR)
-        for box in single_char_boxes:
-            cv2.rectangle(
-                preview, (box.left, box.top), (box.right, box.bottom), (0, 255, 0)
-            )
-        show_image(preview)
+        show_bboxes(preprocessed_image, single_char_boxes, to_bgr=True)
 
     name = normalize_student_name(join_chars(chars))
     return dictionary.match(name)
