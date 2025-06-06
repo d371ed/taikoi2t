@@ -21,6 +21,15 @@ class BoundingBox:
     def height(self) -> int:
         return abs(self.bottom - self.top)
 
+    def is_empty(self) -> bool:
+        return self.width == 0 or self.height == 0
+
+    # convert numpy integers
+    def as_python_int(self) -> "BoundingBox":
+        return BoundingBox(
+            int(self.left), int(self.top), int(self.right), int(self.bottom)
+        )
+
 
 @dataclass(frozen=True)
 class RelativeBox:
