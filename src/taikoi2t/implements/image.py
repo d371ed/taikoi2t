@@ -1,11 +1,29 @@
+import logging
 import math
 from pathlib import Path
-from typing import Tuple
+from typing import Iterable, Tuple
 
 import cv2
 import numpy
 
 from taikoi2t.models.image import BoundingBox, Image, ImageMeta, RelativeBox
+
+logger: logging.Logger = logging.getLogger("taikoi2t.image")
+
+
+def sanitize_roi(roi: BoundingBox, image_width: int, image_height: int) -> BoundingBox:
+    left, right = (
+        (roi.left, roi.right) if roi.left <= roi.right else (roi.right, roi.left)
+    )
+    top, bottom = (
+        (roi.top, roi.bottom) if roi.top <= roi.bottom else (roi.bottom, roi.top)
+    )
+    return BoundingBox(
+        left=__clamp(left, 0, image_width),
+        top=__clamp(top, 0, image_height),
+        right=__clamp(right, 0, image_width),
+        bottom=__clamp(bottom, 0, image_height),
+    )
 
 
 def get_roi_bbox(source: BoundingBox, relative_roi: RelativeBox) -> BoundingBox:
@@ -17,35 +35,68 @@ def get_roi_bbox(source: BoundingBox, relative_roi: RelativeBox) -> BoundingBox:
     )
 
 
-def resize_to(source: Image, width: int) -> Image:
-    scale: float = width / source.shape[1]
-    return cv2.resize(
-        source, (width, int(source.shape[0] * scale)), interpolation=cv2.INTER_LANCZOS4
-    )
+def read_image(path: Path) -> Image | None:
+    try:
+        # imread returns None when error occurred...?
+        return cv2.imread(path.as_posix())
+    except Exception as e:  # unexpected error
+        logger.error(e)
+        return None
 
 
-def skew(source: Image, degree: float) -> Image:
+def convert_to_grayscale(source: Image) -> Image | None:
+    try:
+        return cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
+    except Exception as e:
+        logger.error(e)
+        return None
+
+
+def resize_to(source: Image, width: int) -> Image | None:
+    try:
+        scale: float = width / source.shape[1]
+        return cv2.resize(
+            source,
+            (width, int(source.shape[0] * scale)),
+            interpolation=cv2.INTER_LANCZOS4,
+        )
+    except Exception as e:
+        logger.error(e)
+        return None
+
+
+def skew(source: Image, degree: float) -> Image | None:
     tan_theta: float = math.tan(math.radians(degree))
-    mat = numpy.array([[1, tan_theta, 0], [0, 1, 0]], dtype=numpy.float64)
-    height, width = source.shape[:2]
-    return cv2.warpAffine(source, mat, (int(width + height * tan_theta), height))
+    try:
+        mat = numpy.array([[1, tan_theta, 0], [0, 1, 0]], dtype=numpy.float64)
+        height, width = source.shape[:2]
+        return cv2.warpAffine(source, mat, (int(width + height * tan_theta), height))
+    except Exception as e:
+        logger.error(e)
+        return None
 
 
-def smooth(source: Image, kernel_size: int) -> Image:
-    if kernel_size <= 0:
-        kernel_size = 1
-    if kernel_size % 2 == 0:
-        kernel_size += 1
-    return cv2.GaussianBlur(source, (kernel_size, kernel_size), 0)
+def smooth(source: Image, kernel_size: int) -> Image | None:
+    try:
+        return cv2.GaussianBlur(source, (kernel_size, kernel_size), 0)
+    except Exception as e:
+        logger.error(e)
+        return None
 
 
-def sharpen(source: Image, k: float) -> Image:
-    laplacian: Image = cv2.Laplacian(source, cv2.CV_64F)  # type: ignore
-    return cv2.convertScaleAbs(source - k * laplacian)  # type: ignore
+def sharpen(source: Image, k: float) -> Image | None:
+    try:
+        laplacian: Image = cv2.Laplacian(source, cv2.CV_64F)  # type: ignore
+        return cv2.convertScaleAbs(source - k * laplacian)  # type: ignore
+    except Exception as e:
+        logger.error(e)
+        return None
 
 
 def crop(image: Image, bbox: BoundingBox) -> Image:
-    return image[bbox.top : bbox.bottom, bbox.left : bbox.right]
+    height, width = image.shape[:2]
+    sanitized = sanitize_roi(bbox, image_width=width, image_height=height)
+    return image[sanitized.top : sanitized.bottom, sanitized.left : sanitized.right]
 
 
 #      ___
@@ -53,21 +104,55 @@ def crop(image: Image, bbox: BoundingBox) -> Image:
 #    / |
 # __/  |
 #  x0  x1
-def level_contrast(image: Image, x0: int, x1: int) -> Image:
+def level_contrast(image: Image, x0: int, x1: int) -> Image | None:
     x0 = max(x0, 0)
     x1 = min(x1, 255)
     gain: float = 255.0 / (x1 - x0)
     bias: float = -x0 * gain
-    x = numpy.arange(256, dtype=numpy.uint8)
-    y = numpy.clip(x * gain + bias, 0, 255)
-    return cv2.LUT(image, y).astype(numpy.uint8)  # type: ignore
+    try:
+        x = numpy.arange(256, dtype=numpy.uint8)
+        y = numpy.clip(x * gain + bias, 0, 255)
+        return cv2.LUT(image, y).astype(numpy.uint8)  # type: ignore
+    except Exception as e:
+        logger.error(e)
+        return None
+
+
+def binarize(image: Image) -> Image | None:
+    try:
+        return cv2.threshold(image, 0, 255, cv2.THRESH_OTSU)[1]
+    except Exception as e:
+        logger.error(e)
+        return None
 
 
 # for debug
 def show_image(image: Image, title: str = "") -> None:
-    cv2.imshow(title, image)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    try:
+        cv2.imshow(title, image)
+        cv2.waitKey()
+        cv2.destroyAllWindows()
+    except Exception as e:
+        logger.error(e)
+
+
+# for debug
+def show_bboxes(
+    image: Image, bboxes: Iterable[BoundingBox], to_bgr: bool = False
+) -> None:
+    try:
+        preview: Image = (
+            cv2.cvtColor(image, cv2.COLOR_GRAY2BGR) if to_bgr else image.copy()
+        )
+        for bbox in bboxes:
+            if bbox.is_empty():
+                continue
+            cv2.rectangle(
+                preview, (bbox.left, bbox.top), (bbox.right, bbox.bottom), (0, 255, 0)
+            )
+        show_image(preview)
+    except Exception as e:
+        logger.error(e)
 
 
 def new_image_meta(
@@ -89,3 +174,7 @@ def new_image_meta(
         height=height,
         modal=modal,
     )
+
+
+def __clamp(value: int, lower_limit: int, higher_limit: int) -> int:
+    return min(max(value, lower_limit), higher_limit)

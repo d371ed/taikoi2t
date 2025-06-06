@@ -1,5 +1,7 @@
 {
   "cSpell.words": [
+    "bboxes",
+    "binarize",
     "easyocr",
     "imread",
     "imshow",

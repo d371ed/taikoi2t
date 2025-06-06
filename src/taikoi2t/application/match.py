@@ -4,7 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Iterable, List, Tuple
 
-import cv2
 import easyocr  # type: ignore
 
 from taikoi2t.application.modal import find_modal
@@ -15,7 +14,13 @@ from taikoi2t.application.student import (
     recognize_student_by_character,
 )
 from taikoi2t.application.wins import check_player_wins
-from taikoi2t.implements.image import get_roi_bbox, new_image_meta, show_image
+from taikoi2t.implements.image import (
+    convert_to_grayscale,
+    get_roi_bbox,
+    new_image_meta,
+    read_image,
+    show_bboxes,
+)
 from taikoi2t.implements.match import get_match_id
 from taikoi2t.implements.ocr import read_text_from_roi
 from taikoi2t.implements.settings import Settings
@@ -47,14 +52,12 @@ def extract_match_result_from_path(
     if not path.exists():
         logger.error(f"{path_str} is not found")
         return None
-
     if not path.is_file():
         logger.error(f"{path_str} is not a file")
         return None
 
-    # imread returns None when error occurred
-    source: Image | None = cv2.imread(path_str)
-    if source is None:  # type: ignore
+    source = read_image(path)
+    if source is None:
         logger.error(f"{path_str} cannot read as an image")
         return None
 
@@ -79,28 +82,24 @@ def extract_match_result(
     settings: Settings,
 ) -> MatchResult | None:
     image_path_str = image_path.as_posix()
-    grayscale: Image = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)  # for OCR
+    grayscale = convert_to_grayscale(source)  # for OCR
+    if grayscale is None:
+        return None
 
     modal = find_modal(grayscale, settings.verbose)
     if modal is None:
         logger.error(f"Cannot detect any result-box in {image_path_str}")
         return None
     if settings.verbose >= VERBOSE_IMAGE:
-        show_image(
-            cv2.rectangle(
-                source.copy(),
-                (modal.left, modal.top),
-                (modal.right, modal.bottom),
-                (0, 255, 0),
-            ),
-            "modal",
-        )
+        show_bboxes(source, [modal])
 
     player_team: Team
     opponent_team: Team
 
     def process_students() -> Tuple[Team, Team] | None:
         preprocessed_images = preprocess_students_for_ocr(grayscale, modal)
+        if len(preprocessed_images) == 0:
+            return None
 
         first_recognized_students: Iterable[Student] = [
             recognize_student(reader, dictionary, image, settings.verbose)
@@ -170,7 +169,7 @@ def extract_match_result(
         settings,
     )
 
-    image_height, image_width, _ = source.shape
+    image_height, image_width = source.shape[:2]
     image_meta = new_image_meta(image_path, (image_width, image_height), modal)
     return MatchResult(match_id, image_meta, player=player_team, opponent=opponent_team)
 
