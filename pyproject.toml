@@ -18,7 +18,7 @@ dependencies = [
 taikoi2t = "taikoi2t.app:run"
 
 [tool.poetry]
-packages = [{include = "taikoi2t", from = "src"}]
+packages = [{include = "taikoi2t"}]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"

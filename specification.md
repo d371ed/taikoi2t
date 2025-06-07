@@ -1,12 +1,14 @@
 # 仕様
 
 ```
-usage: taikoi2t
-       [-h] [--version] -d DICTIONARY [--opponent | -c COLUMNS [COLUMNS ...]]
-       [--csv | --json] [--no-alias] [--no-sp-sort]
-       [--file-sort {BIRTH_ASC,BIRTH_DESC,MODIFY_ASC,MODIFY_DESC,NAME_ASC,NAME_DESC}]
-       [-v] [--logfile LOGFILE]
-       files [files ...]
+usage: taikoi2t [-h] [--version]
+                                                 -d DICTIONARY [--opponent |
+                                                 -c COLUMNS [COLUMNS ...]]
+                                                 [--csv | --json] [--no-alias]
+                                                 [--no-sp-sort]
+                                                 [--file-sort {BIRTH_ASC,BIRTH_DESC,MODIFY_ASC,MODIFY_DESC,NAME_ASC,NAME_DESC}]
+                                                 [-v] [--logfile LOGFILE]
+                                                 files [files ...]
 
 positional arguments:
   files                 target images
