@@ -34,6 +34,8 @@ FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホ�
 
 事前に [Python](https://www.python.org/) 3.13 と [Poetry](https://python-poetry.org/) のインストールが必要です.
 
+また, ご使用の GPU が CUDA 12.6 非対応の場合は事前に [PyTorch バージョンについて](#pytorch-バージョンについて) の手順が必要です.
+
 ```sh
 cd path\to\taikoi2t\
 poetry install
@@ -88,12 +90,19 @@ CUDA 11.8 へ変更する例:
 ```toml:pyproject.toml
 [[tool.poetry.source]]
 name = "torch_source"
-url = "https://download.pytorch.org/whl/cu126" # 該当バージョン取得先へ変更
+url = "https://download.pytorch.org/whl/cu118" # 該当バージョン取得先へ変更
 priority = "explicit"
 
 [tool.poetry.dependencies]
 torch = {source = "torch_source"}
 torchvision = {source = "torch_source"}
+```
+
+書き換え後, 以下のコマンドでインストールを進行します.
+
+```sh
+poetry update torch torchvision
+poetry install
 ```
 
 グラフィックボードを搭載していない PC など, CPU で実行する場合は上記コードを削除してください.
@@ -120,11 +129,20 @@ torchvision = {source = "torch_source"}
 
 ## 制作者の実行環境
 
+- Windows 11 Pro 24H2
+- Python 3.13.5
+- AMD Ryzen 7 7700
+- RAM 32GB
+- NVIDIA GeForce RTX 5060 Ti 16GB
+- NVIDIA Driver Version: 576.52, CUDA Version: 12.8
+
+(過去の開発機)
+
 - Windows 11 Home 24H2
 - Python 3.13.2
-- Core i5-9600K
+- Intel Core i5-9600K
 - RAM 16GB
-- GeForce GTX 1060 6GB
+- NVIDIA GeForce GTX 1060 6GB
 - NVIDIA Driver Version: 560.94, CUDA Version: 12.6
 
 
