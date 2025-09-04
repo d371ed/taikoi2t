@@ -23,7 +23,7 @@ FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホ�
 - 出力形式は TSV, CSV, JSON
 
 **※注意** [PyTorch](https://pytorch.org/) のインストールにより, これだけで 4.7GB 以上のストレージ容量が必要になるはずです. CPU 版に変更することで省容量化は可能ですが, 実行速度が大きく低下します.
-また GPU とドライバが CUDA 12.6 をサポートしていない場合もおそらく実行速度が低下する (あるいは実行自体が不能) と予想されます.
+また GPU とドライバが CUDA 12.8 をサポートしていない場合もおそらく実行速度が低下する (あるいは実行自体が不能) と予想されます.
 
 これについては [PyTorch バージョンについて](#pytorch-バージョンについて) をご覧ください.
 
@@ -34,7 +34,7 @@ FALSE	イオリ	ホシノ	シロコ＊	シュン	水シロコ	佐天涙子	ホ�
 
 事前に [Python](https://www.python.org/) 3.13 と [Poetry](https://python-poetry.org/) のインストールが必要です.
 
-また, ご使用の GPU が CUDA 12.6 非対応の場合は事前に [PyTorch バージョンについて](#pytorch-バージョンについて) の手順が必要です.
+また, ご使用の GPU が CUDA 12.8 非対応の場合は事前に [PyTorch バージョンについて](#pytorch-バージョンについて) の手順が必要です.
 
 ```sh
 cd path\to\taikoi2t\
@@ -83,7 +83,7 @@ poetry run taikoi2t -d .\students.csv .\videoframe_100000.jpg | Set-Clipboard
 
 OCR の動作に [PyTorch](https://pytorch.org/) を利用しています.
 
-デフォルトでは CUDA 12.6 対応の PyTorch をインストールしますが, お使いの GPU に適合しない場合はインストール前に [`pyproject.toml`](./pyproject.toml) を書き換えることで構成をカスタマイズする必要があります.
+デフォルトでは CUDA 12.8 対応の PyTorch をインストールしますが, お使いの GPU に適合しない場合はインストール前に [`pyproject.toml`](./pyproject.toml) を書き換えることで構成をカスタマイズする必要があります.
 
 CUDA 11.8 へ変更する例:
 
