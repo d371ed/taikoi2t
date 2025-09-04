@@ -7,7 +7,7 @@ $outFile = [System.Environment]::GetEnvironmentVariable("OUT_FILE", "Process")
 $backupDir = [System.Environment]::GetEnvironmentVariable("BACKUP_DIR", "Process")
 
 $timeThreshold = (Get-Date).AddMinutes(-$targetTimeMin)
-$fetchTargetFiles = Get-ChildItem -Path "$($imageFetchDir)\*" -File -Include *.png, *.jpg | 
+$fetchTargetFiles = Get-ChildItem -Path "$($imageFetchDir)\*" -File -Include *.png, *.jpg |
     Where-Object { $_.CreationTime -gt $timeThreshold }
 
 $currentDir = $PWD.Path

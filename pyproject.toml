@@ -1,6 +1,6 @@
 [project]
 name = "taikoi2t"
-version = "1.6.1"
+version = "1.6.2"
 description = "Extract team information from PvP results screenshots in Blue Archive."
 authors = [
     {name = "D371 Amamoriya"}
@@ -18,7 +18,7 @@ dependencies = [
 taikoi2t = "taikoi2t.app:run"
 
 [tool.poetry]
-packages = [{include = "taikoi2t", from = "src"}]
+packages = [{include = "taikoi2t"}]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
@@ -27,7 +27,7 @@ pre-commit = "^4.2.0"
 
 [[tool.poetry.source]]
 name = "torch_source"
-url = "https://download.pytorch.org/whl/cu126"
+url = "https://download.pytorch.org/whl/cu128"
 priority = "explicit"
 
 [tool.poetry.dependencies]
